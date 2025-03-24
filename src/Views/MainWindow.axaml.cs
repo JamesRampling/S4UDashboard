@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace S4UDashboard;
+namespace S4UDashboard.Views;
 
 public partial class MainWindow : Window
 {

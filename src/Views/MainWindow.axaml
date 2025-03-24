@@ -2,8 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="using:S4UDashboard.Views"
         mc:Ignorable="d" Width="800" Height="600"
-        x:Class="S4UDashboard.MainWindow"
+        x:Class="S4UDashboard.Views.MainWindow"
+        Icon="/Assets/icon.ico"
         Title="Sensing4U Dashboard">
-  Welcome to Avalonia!
+  <views:MainView/>
 </Window>

@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:tabalonia="using:Tabalonia.Controls"
+             xmlns:vm="using:S4UDashboard.ViewModels"
+             xmlns:views="using:S4UDashboard.Views"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="S4UDashboard.Views.MainView"
+             x:DataType="vm:MainModelView">
+  <Design.DataContext><vm:MainModelView/></Design.DataContext>
+  <StackPanel>
+    <Menu>
+      <MenuItem Header="_File">
+        <MenuItem Header="_Open..." InputGesture="Ctrl+O" Command="{Binding MakeNew}"/>
+        <Separator/>
+        <MenuItem Header="_Save" InputGesture="Ctrl+S"/>
+        <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S"/>
+        <MenuItem Header="Save A_ll"/>
+        <Separator/>
+        <MenuItem Header="_Export..." InputGesture="Ctrl+E"/>
+        <MenuItem Header="E_xport As..." InputGesture="Ctrl+Shift+E"/>
+        <MenuItem Header="_Import..."/>
+        <Separator/>
+        <MenuItem Header="Se_ttings" InputGesture="Ctrl+,"/>
+        <Separator/>
+        <MenuItem Header="_Quit" InputGesture="Ctrl+Q"/>
+      </MenuItem>
+      <MenuItem Header="_View">
+        <MenuItem Header="So_rt..."/>
+        <MenuItem Header="_Search..." InputGesture="Ctrl+F"/>
+        <MenuItem Header="_Thresholds..." InputGesture="Ctrl+Shift+T"/>
+        <Separator/>
+        <MenuItem Header="Next Dataset" InputGesture="Ctrl+OEMCloseBrackets"/>
+        <MenuItem Header="Previous Dataset" InputGesture="Ctrl+OEMOpenBrackets"/>
+        <Separator/>
+        <MenuItem Header="Close Dataset" InputGesture="Ctrl+W"/>
+      </MenuItem>
+      <MenuItem Header="_Help">
+        <MenuItem Header="_User Manual"/>
+        <MenuItem Header="_Documentation"/>
+        <Separator/>
+        <MenuItem Header="_About"/>
+      </MenuItem>
+    </Menu>
+
+    <tabalonia:TabsControl IsVisible="{Binding AnyOpenFiles.Value}"
+                           ItemsSource="{Binding OpenFiles.Value}"
+                           ShowDefaultAddButton="{x:False}"
+                           LastTabClosedAction="{x:Null}">
+      <TabControl.ContentTemplate>
+        <DataTemplate DataType="vm:FileTabViewModel">
+          <views:FileTabView/>
+        </DataTemplate>
+      </TabControl.ContentTemplate>
+      <TabControl.ItemTemplate>
+        <DataTemplate DataType="vm:FileTabViewModel">
+          <TextBlock Text="{Binding Header}" />
+        </DataTemplate>
+      </TabControl.ItemTemplate>
+    </tabalonia:TabsControl>
+    <TextBlock IsVisible="{Binding !AnyOpenFiles.Value}" Text="no tabs open"/>
+  </StackPanel>
+</UserControl>
