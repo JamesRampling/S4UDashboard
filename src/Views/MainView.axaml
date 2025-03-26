@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:tabalonia="using:Tabalonia.Controls"
+             xmlns:controls="using:S4UDashboard.Controls"
              xmlns:vm="using:S4UDashboard.ViewModels"
              xmlns:views="using:S4UDashboard.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
@@ -10,7 +11,7 @@
              x:DataType="vm:MainModelView">
   <Design.DataContext><vm:MainModelView/></Design.DataContext>
   <StackPanel>
-    <Menu>
+    <controls:HKMenu>
       <MenuItem Header="_File">
         <MenuItem Header="_Open..." InputGesture="Ctrl+O" Command="{Binding MakeNew}"/>
         <Separator/>
@@ -42,7 +43,7 @@
         <Separator/>
         <MenuItem Header="_About"/>
       </MenuItem>
-    </Menu>
+    </controls:HKMenu>
 
     <tabalonia:TabsControl IsVisible="{Binding AnyOpenFiles.Value}"
                            ItemsSource="{Binding OpenFiles}"
