@@ -25,6 +25,7 @@ public partial class ReactiveList<T> : INotifyPropertyChanged, INotifyCollection
         }
 
         EffectManager.Trigger(this, "Item[]");
+        EffectManager.PauseTracking(() => PropertyChanged?.Invoke(this, new("Item[]")));
         EffectManager.PauseTracking(() => CollectionChanged?.Invoke(this, e));
     }
 
