@@ -45,7 +45,7 @@
     </Menu>
 
     <tabalonia:TabsControl IsVisible="{Binding AnyOpenFiles.Value}"
-                           ItemsSource="{Binding OpenFiles.Value}"
+                           ItemsSource="{Binding OpenFiles}"
                            ShowDefaultAddButton="{x:False}"
                            LastTabClosedAction="{x:Null}">
       <TabControl.ContentTemplate>

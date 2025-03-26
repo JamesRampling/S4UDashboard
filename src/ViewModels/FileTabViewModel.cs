@@ -5,7 +5,7 @@ namespace S4UDashboard.ViewModels;
 public class FileTabViewModel : ViewModelBase
 {
     public static string Header => "Foo";
-    public RefValue<string> TextField { get; } = new("Initial");
+    public ReactiveCell<string> TextField { get; } = new("Initial");
 
     public void LowercasifyCommand()
     {
