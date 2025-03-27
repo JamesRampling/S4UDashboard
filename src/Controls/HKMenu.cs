@@ -29,7 +29,7 @@ public class HKMenu : Menu
         var window = this.FindAncestorOfType<Window>();
         if (window == null) return;
 
-        _keyBindings = TraverseItems(this.LogicalChildren.OfType<MenuItem>())
+        _keyBindings = this.GetLogicalDescendants().OfType<MenuItem>()
             .Where(i => i.InputGesture != null && i.Command != null)
             .Select(i => new KeyBinding()
             {
@@ -52,16 +52,5 @@ public class HKMenu : Menu
 
         window.KeyBindings.RemoveAll(kb => _keyBindings.Contains(kb));
         _keyBindings = null;
-    }
-
-    private static IEnumerable<MenuItem> TraverseItems(IEnumerable<MenuItem> items)
-    {
-        foreach (var item in items)
-        {
-            yield return item;
-
-            var children = item.GetLogicalChildren().OfType<MenuItem>();
-            foreach (var ancestor in TraverseItems(children)) yield return ancestor;
-        }
     }
 }
