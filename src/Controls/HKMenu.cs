@@ -35,8 +35,9 @@ public class HKMenu : Menu
             {
                 Gesture = i.InputGesture!,
                 Command = i.Command!,
-            }
-            ).ToImmutableHashSet();
+                /* Despite not being nullable CommandParameter is fine being null. */
+                CommandParameter = i.CommandParameter!,
+            }).ToImmutableHashSet();
 
         window.KeyBindings.AddRange(_keyBindings);
     }
