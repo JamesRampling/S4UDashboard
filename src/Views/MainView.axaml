@@ -8,8 +8,8 @@
              xmlns:views="using:S4UDashboard.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="S4UDashboard.Views.MainView"
-             x:DataType="vm:MainModelView">
-  <Design.DataContext><vm:MainModelView/></Design.DataContext>
+             x:DataType="vm:MainViewModel">
+  <Design.DataContext><vm:MainViewModel/></Design.DataContext>
   <StackPanel>
     <controls:HKMenu>
       <MenuItem Header="_File">
@@ -25,17 +25,17 @@
         <Separator/>
         <MenuItem Header="Se_ttings" InputGesture="Ctrl+,"/>
         <Separator/>
-        <MenuItem Header="_Quit" InputGesture="Ctrl+Q"/>
+        <MenuItem Header="_Quit" InputGesture="Ctrl+Q" Command="{Binding QuitApp}"/>
       </MenuItem>
       <MenuItem Header="_View">
         <MenuItem Header="So_rt..."/>
         <MenuItem Header="_Search..." InputGesture="Ctrl+F"/>
         <MenuItem Header="_Thresholds..." InputGesture="Ctrl+Shift+T"/>
         <Separator/>
-        <MenuItem Header="Next Dataset" InputGesture="Ctrl+OEMCloseBrackets"/>
-        <MenuItem Header="Previous Dataset" InputGesture="Ctrl+OEMOpenBrackets"/>
+        <MenuItem Header="Next Dataset" InputGesture="Ctrl+OEMCloseBrackets" Command="{Binding GoNextTab}"/>
+        <MenuItem Header="Previous Dataset" InputGesture="Ctrl+OEMOpenBrackets" Command="{Binding GoPrevTab}"/>
         <Separator/>
-        <MenuItem Header="Close Dataset" InputGesture="Ctrl+W"/>
+        <MenuItem Header="Close Dataset" InputGesture="Ctrl+W" Command="{Binding CloseSelectedTab}"/>
       </MenuItem>
       <MenuItem Header="_Help">
         <MenuItem Header="_User Manual"/>
@@ -47,7 +47,10 @@
 
     <tabalonia:TabsControl IsVisible="{Binding AnyOpenFiles.Value}"
                            ItemsSource="{Binding OpenFiles}"
+                           SelectedIndex="{Binding SelectedTabIndex.Value}"
                            ShowDefaultAddButton="{x:False}"
+                           LeftThumbWidth="0"
+                           RightThumbWidth="0"
                            LastTabClosedAction="{x:Null}">
       <TabControl.ContentTemplate>
         <DataTemplate DataType="vm:FileTabViewModel">

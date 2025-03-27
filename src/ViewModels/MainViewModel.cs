@@ -1,16 +1,59 @@
+using System;
+using System.Diagnostics;
+
+using Avalonia.Controls;
+
 using S4UDashboard.Reactive;
 
 namespace S4UDashboard.ViewModels;
 
-public class MainModelView : ViewModelBase
+public class MainViewModel : ViewModelBase
 {
+    public Window? MainWindow { get; }
+
     public ReactiveList<FileTabViewModel> OpenFiles { get; } = [new()];
     public ComputedCell<bool> AnyOpenFiles { get; }
+    public ReactiveCell<int> SelectedTabIndex { get; } = new(-1);
 
-    public MainModelView()
+    public MainViewModel(Window? mainWindow)
     {
+        if ((MainWindow = mainWindow) != null) MainWindow.Closing += HandleClosing;
+
         AnyOpenFiles = new(() => OpenFiles.Count != 0);
     }
+    public MainViewModel() : this(null) { }
 
     public void MakeNew() => OpenFiles.Add(new());
+
+    private void IfAnyTabs(Action action)
+    {
+        if (AnyOpenFiles.Value) action();
+    }
+
+    public void GoNextTab() => IfAnyTabs(() => SelectedTabIndex.Value = Math.Clamp(SelectedTabIndex.Value + 1, 0, OpenFiles.Count - 1));
+    public void GoPrevTab() => IfAnyTabs(() => SelectedTabIndex.Value = Math.Clamp(SelectedTabIndex.Value - 1, 0, OpenFiles.Count - 1));
+    public void CloseSelectedTab() => IfAnyTabs(() => OpenFiles.RemoveAt(SelectedTabIndex.Value));
+
+    // Acts as though the window was requested to close.
+    public void QuitApp() => MainWindow?.Close();
+
+    // Handles the event when the window was requested to close.
+    private void HandleClosing(object? o, WindowClosingEventArgs e)
+    {
+        e.Cancel = true;
+
+        if (TryExit())
+        {
+            MainWindow!.Closing -= HandleClosing;
+            MainWindow!.Close();
+        }
+    }
+
+    // Handles actions that should be performed before the window is closed.
+    // Returns whether or not the window should actually be closed, which
+    // may not be true if the user cancelled the close in a dialog.
+    private bool TryExit()
+    {
+        return true;
+    }
 }
