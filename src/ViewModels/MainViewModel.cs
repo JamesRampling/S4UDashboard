@@ -30,9 +30,15 @@ public class MainViewModel : ViewModelBase
         if (AnyOpenFiles.Value) action();
     }
 
-    public void GoNextTab() => IfAnyTabs(() => SelectedTabIndex.Value = Math.Clamp(SelectedTabIndex.Value + 1, 0, OpenFiles.Count - 1));
-    public void GoPrevTab() => IfAnyTabs(() => SelectedTabIndex.Value = Math.Clamp(SelectedTabIndex.Value - 1, 0, OpenFiles.Count - 1));
-    public void CloseSelectedTab() => IfAnyTabs(() => OpenFiles.RemoveAt(SelectedTabIndex.Value));
+    public void SelectTab(int index) => IfAnyTabs(() => SelectedTabIndex.Value = Math.Clamp(index, 0, OpenFiles.Count - 1));
+    public void GoNextTab() => SelectTab(SelectedTabIndex.Value + 1);
+    public void GoPrevTab() => SelectTab(SelectedTabIndex.Value - 1);
+    public void CloseSelectedTab() => IfAnyTabs(() =>
+    {
+        var initial = SelectedTabIndex.Value;
+        OpenFiles.RemoveAt(initial);
+        SelectTab(initial);
+    });
 
     // Acts as though the window was requested to close.
     public void QuitApp() => MainWindow?.Close();
