@@ -17,7 +17,7 @@ public class ReactiveCell<T>(T inner) : INotifyPropertyChanged
             inner = value;
 
             EffectManager.Trigger(this, nameof(Value));
-            EffectManager.PauseTracking(() => PropertyChanged?.Invoke(this, new(nameof(Value))));
+            EffectManager.GapEffectTracking(() => PropertyChanged?.Invoke(this, new(nameof(Value))));
         }
     }
 
@@ -33,7 +33,7 @@ public class ComputedCell<T> : INotifyPropertyChanged
             _value = update();
 
             EffectManager.Trigger(this, nameof(Value));
-            EffectManager.PauseTracking(() => PropertyChanged?.Invoke(this, new(nameof(Value))));
+            EffectManager.GapEffectTracking(() => PropertyChanged?.Invoke(this, new(nameof(Value))));
         });
     }
 

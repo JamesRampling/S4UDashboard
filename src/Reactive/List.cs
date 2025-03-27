@@ -21,12 +21,12 @@ public partial class ReactiveList<T> : INotifyPropertyChanged, INotifyCollection
             e.Action != NotifyCollectionChangedAction.Move)
         {
             EffectManager.Trigger(this, nameof(Count));
-            EffectManager.PauseTracking(() => PropertyChanged?.Invoke(this, new(nameof(Count))));
+            EffectManager.GapEffectTracking(() => PropertyChanged?.Invoke(this, new(nameof(Count))));
         }
 
         EffectManager.Trigger(this, "Item[]");
-        EffectManager.PauseTracking(() => PropertyChanged?.Invoke(this, new("Item[]")));
-        EffectManager.PauseTracking(() => CollectionChanged?.Invoke(this, e));
+        EffectManager.GapEffectTracking(() => PropertyChanged?.Invoke(this, new("Item[]")));
+        EffectManager.GapEffectTracking(() => CollectionChanged?.Invoke(this, e));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

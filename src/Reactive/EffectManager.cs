@@ -15,22 +15,21 @@ namespace S4UDashboard.Reactive;
 public static class EffectManager
 {
     private readonly static ConditionalWeakTable<object, Dictionary<string, HashSet<Action>>> Subscriptions = [];
-    private static Action? _activeEffect;
-    private static bool _pauseTracking = false;
+    private readonly static Stack<Action?> EffectStack = [];
 
     /// <summary>Subscribes the active effect to the specified dependency.
     /// <para>
-    /// If called when an effect is active and tracking is not paused, this will subscribe that effect
-    /// to the specified dependency. The effect will then be executed when the dependency is triggered.
+    /// If called when an effect is active and not null, this will subscribe that effect to the
+    /// specified dependency. The effect will then be executed when the dependency is triggered.
     /// </para>
     /// </summary>
     public static void Track(object target, string key)
     {
-        if (_activeEffect != null && !_pauseTracking)
+        if (EffectStack.TryPeek(out var activeEffect) && activeEffect != null)
         {
             var properties = Subscriptions.GetOrCreateValue(target);
             if (!properties.ContainsKey(key)) properties[key] = [];
-            properties[key].Add(_activeEffect);
+            properties[key].Add(activeEffect);
         }
     }
 
@@ -58,24 +57,24 @@ public static class EffectManager
     {
         void Effect()
         {
-            var old = _activeEffect;
-            _activeEffect = Effect;
+            EffectStack.Push(Effect);
             update();
-            _activeEffect = old;
+            EffectStack.Pop();
         }
         Effect();
     }
 
-    /// <summary>Pauses subscription tracking for the duration of <c>scope</c>.
+    /// <summary>Makes it such that there is no active effect at the start of <c>scope</c>.
     /// <para>
-    /// This is useful when interacting with systems that may access tracked properties
-    /// but should not be treated as dependencies (e.g. supporting <c>INotifyProperyChanged</c>).
+    /// This is used for preventing cycles when a reactive object may interact with something
+    /// that may access that object (or a dependent object) but should not enact a dependency
+    /// on the object (since this would cause a cycle).
     /// </para>
     /// </summary>
-    public static void PauseTracking(Action scope)
+    public static void GapEffectTracking(Action scope)
     {
-        _pauseTracking = true;
+        EffectStack.Push(null);
         scope();
-        _pauseTracking = false;
+        EffectStack.Pop();
     }
 }
