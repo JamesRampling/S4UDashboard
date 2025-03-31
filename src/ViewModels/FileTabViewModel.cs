@@ -1,10 +1,13 @@
+using S4UDashboard.Model;
 using S4UDashboard.Reactive;
 
 namespace S4UDashboard.ViewModels;
 
-public class FileTabViewModel : ViewModelBase
+public class FileTabViewModel(DatasetModel dataset) : ViewModelBase
 {
-    public static string Header => "Foo";
+    public ReactiveCell<DatasetModel> Dataset { get; } = new(dataset);
+
+    public string Header => Dataset.Value.AnnotatedData.AnnotatedName ?? Dataset.Value.FileName;
     public ReactiveCell<string> TextField { get; } = new("Initial");
 
     public void LowercasifyCommand()

@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 
 using Avalonia.Controls;
 
@@ -11,7 +10,7 @@ public class MainViewModel : ViewModelBase
 {
     public Window? MainWindow { get; }
 
-    public ReactiveList<FileTabViewModel> OpenFiles { get; } = [new()];
+    public ReactiveList<FileTabViewModel> OpenFiles { get; } = [];
     public ComputedCell<bool> AnyOpenFiles { get; }
     public ReactiveCell<int> SelectedTabIndex { get; } = new(-1);
 
@@ -23,7 +22,27 @@ public class MainViewModel : ViewModelBase
     }
     public MainViewModel() : this(null) { }
 
-    public void MakeNew() => OpenFiles.Add(new());
+    public void MakeNew() => OpenFiles.Add(new(new Model.DatasetModel
+    {
+        FilePath = "/foo",
+        AnnotatedData = new Model.AnnotatedDataModel
+        {
+            AnnotatedName = "Foo",
+        },
+        CalculatedData = new Model.CalculatedDataModel
+        {
+            Mean = 0.0,
+            Minimum = 0.0,
+            Maximum = 0.0
+        },
+        SensorData = new Model.SensorDataModel
+        {
+            MeasurementIdentifier = "temperature",
+            SensorNames = [],
+            SampleTimes = [],
+            Samples = [],
+        },
+    }));
 
     private void IfAnyTabs(Action action)
     {
