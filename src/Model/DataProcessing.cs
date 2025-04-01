@@ -17,7 +17,7 @@ public class DataProcessing
     {
         double min = double.PositiveInfinity, max = double.NegativeInfinity, sum = 0.0;
 
-        foreach (var sample in sensorData.Samples.SelectMany(x => x))
+        foreach (var sample in sensorData.Samples.EnumerateFlat())
         {
             if (sample < min) min = sample;
             if (sample > max) max = sample;
@@ -44,7 +44,7 @@ public class DataProcessing
         while (lowerBound < upperBound)
         {
             var middleIdx = (lowerBound + upperBound) / 2;
-            var current = selector.Invoke(sorted[middleIdx]);
+            var current = selector(sorted[middleIdx]);
 
             switch (needle.CompareTo(current))
             {

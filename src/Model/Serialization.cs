@@ -8,43 +8,57 @@ namespace S4UDashboard.Model;
 
 public static class Serializers
 {
-    /* This is "S4UD" in ASCII */
-    public readonly static int MagicSignature = 0x53_34_55_44;
+    /* This is "S4UD" in ASCII (little endian) */
+    public readonly static int MagicSignature = 0x44_55_34_53;
     /* The current version of the serialisation format */
-    public readonly static int LatestFormatVersion = 1;
+    public readonly static int LatestFormatVersion = -1;
+
+    private readonly static Func<BinaryReader, string> ReadString = (r) => r.ReadString();
+    private readonly static Action<BinaryWriter, string> WriteString = (w, i) => w.Write(i);
+    private readonly static Func<BinaryReader, double> ReadDouble = (r) => r.ReadDouble();
+    private readonly static Action<BinaryWriter, double> WriteDouble = (w, i) => w.Write(i);
+    private readonly static Func<BinaryReader, DateTime> ReadDateTime = (r) => DateTime.FromBinary(r.ReadInt64());
+    private readonly static Action<BinaryWriter, DateTime> WriteDateTime = (w, i) => w.Write(i.ToBinary());
 
     public readonly static Func<BinaryReader, AnnotatedDataModel> AnnotatedDataDeserializer = (r) => new AnnotatedDataModel
     {
-        AnnotatedName = r.ReadOptional(r => r.ReadString()),
-        LowerThreshold = r.ReadOptionalValue(r => r.ReadDouble()),
-        UpperThreshold = r.ReadOptionalValue(r => r.ReadDouble()),
+        AnnotatedName = r.ReadOptional(ReadString),
+        LowerThreshold = r.ReadOptionalValue(ReadDouble),
+        UpperThreshold = r.ReadOptionalValue(ReadDouble),
     };
 
     public readonly static Action<BinaryWriter, AnnotatedDataModel> AnnotatedDataSerializer = (w, i) =>
     {
-        w.WriteOptional((w, i) => w.Write(i), i.AnnotatedName);
-        w.WriteOptionalValue((w, i) => w.Write(i), i.LowerThreshold);
-        w.WriteOptionalValue((w, i) => w.Write(i), i.UpperThreshold);
+        w.WriteOptional(WriteString, i.AnnotatedName);
+        w.WriteOptionalValue(WriteDouble, i.LowerThreshold);
+        w.WriteOptionalValue(WriteDouble, i.UpperThreshold);
     };
 
-    public readonly static Func<BinaryReader, SensorDataModel> SensorDataDeserializer = (r) => new SensorDataModel
+    public readonly static Func<BinaryReader, SensorDataModel> SensorDataDeserializer = (r) =>
     {
-        MeasurementIdentifier = r.ReadString(),
-        SensorNames = r.ReadEnumerable(r => r.ReadString()).ToImmutableArray(),
-        SampleTimes = r.ReadEnumerable(r => DateTime.FromBinary(r.ReadInt64())).ToImmutableArray(),
-        /* TODO: this should be replaced with a flat array */
-        Samples = r.ReadEnumerable(r => r.ReadEnumerable(r => r.ReadDouble()).ToImmutableArray()).ToImmutableArray(),
+        var measurementIdentifier = r.ReadString();
+        var sensorNames = r.ReadEnumerable(ReadString).ToImmutableArray();
+        var sampleTimes = r.ReadEnumerable(ReadDateTime).ToImmutableArray();
+        var samples = r.ReadRawEnumerable(ReadDouble, sensorNames.Length * sampleTimes.Length);
+
+        return new SensorDataModel
+        {
+            MeasurementIdentifier = measurementIdentifier,
+            SensorNames = sensorNames,
+            SampleTimes = sampleTimes,
+            Samples = new(samples, sensorNames.Length, sampleTimes.Length),
+        };
     };
 
     public readonly static Action<BinaryWriter, SensorDataModel> SensorDataSerializer = (w, i) =>
     {
         w.Write(i.MeasurementIdentifier);
-        w.WriteEnumerable((w, i) => w.Write(i), i.SensorNames);
-        w.WriteEnumerable((w, i) => w.Write(i.ToBinary()), i.SampleTimes);
-        w.WriteEnumerable((w, i) => w.WriteEnumerable((w, i) => w.Write(i), i), i.Samples);
+        w.WriteEnumerable(WriteString, i.SensorNames);
+        w.WriteEnumerable(WriteDateTime, i.SampleTimes);
+        w.WriteRawEnumerable(WriteDouble, i.Samples.EnumerateFlat());
     };
 
-    public readonly static Func<BinaryReader, DatasetModel> DatasetDeserializer = (r) =>
+    public readonly static Func<Uri, Func<BinaryReader, DatasetModel>> DatasetDeserializer = (path) => (r) =>
     {
         int version;
 
@@ -57,7 +71,7 @@ public static class Serializers
 
         return new DatasetModel
         {
-            FilePath = "/foo",
+            FilePath = path,
             AnnotatedData = annotatedData,
             SensorData = sensorData,
             CalculatedData = calculatedData,
@@ -80,12 +94,12 @@ public static class Serialization
         this BinaryWriter writer,
         Action<BinaryWriter, T> serializer,
         T value
-    ) => serializer.Invoke(writer, value);
+    ) => serializer(writer, value);
 
     public static T Read<T>(
         this BinaryReader reader,
         Func<BinaryReader, T> deserializer
-    ) => deserializer.Invoke(reader);
+    ) => deserializer(reader);
 
     public static void WriteOptional<T>(
         this BinaryWriter writer,
@@ -94,13 +108,13 @@ public static class Serialization
     ) where T : class
     {
         writer.Write(value != null);
-        if (value != null) serializer.Invoke(writer, value);
+        if (value != null) serializer(writer, value);
     }
 
     public static T? ReadOptional<T>(
         this BinaryReader reader,
         Func<BinaryReader, T> deserializer
-    ) where T : class => reader.ReadBoolean() ? deserializer.Invoke(reader) : null;
+    ) where T : class => reader.ReadBoolean() ? deserializer(reader) : null;
 
     public static void WriteOptionalValue<T>(
         this BinaryWriter writer,
@@ -109,13 +123,13 @@ public static class Serialization
     ) where T : struct
     {
         writer.Write(value.HasValue);
-        if (value.HasValue) serializer.Invoke(writer, value.Value);
+        if (value.HasValue) serializer(writer, value.Value);
     }
 
     public static T? ReadOptionalValue<T>(
         this BinaryReader reader,
         Func<BinaryReader, T> deserializer
-    ) where T : struct => reader.ReadBoolean() ? deserializer.Invoke(reader) : null;
+    ) where T : struct => reader.ReadBoolean() ? deserializer(reader) : null;
 
     public static void WriteEnumerable<T>(
         this BinaryWriter writer,
@@ -124,7 +138,7 @@ public static class Serialization
     )
     {
         writer.Write(series.Count());
-        foreach (var item in series) serializer.Invoke(writer, item);
+        foreach (var item in series) serializer(writer, item);
     }
 
     public static IEnumerable<T> ReadEnumerable<T>(
@@ -133,6 +147,24 @@ public static class Serialization
     )
     {
         var length = reader.ReadInt32();
-        for (var i = 0; i < length; i++) yield return deserializer.Invoke(reader);
+        for (var i = 0; i < length; i++) yield return deserializer(reader);
+    }
+
+    public static void WriteRawEnumerable<T>(
+        this BinaryWriter writer,
+        Action<BinaryWriter, T> serializer,
+        IEnumerable<T> series
+    )
+    {
+        foreach (var item in series) serializer(writer, item);
+    }
+
+    public static IEnumerable<T> ReadRawEnumerable<T>(
+        this BinaryReader reader,
+        Func<BinaryReader, T> deserializer,
+        int length
+    )
+    {
+        for (var i = 0; i < length; i++) yield return deserializer(reader);
     }
 }

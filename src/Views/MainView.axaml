@@ -13,10 +13,11 @@
   <StackPanel>
     <controls:HKMenu>
       <MenuItem Header="_File">
-        <MenuItem Header="_Open..." InputGesture="Ctrl+O" Command="{Binding MakeNew}"/>
+        <MenuItem Header="Make New" Command="{Binding MakeNew}"/>
+        <MenuItem Header="_Open..." InputGesture="Ctrl+O" Command="{Binding OpenFileDialog}"/>
         <Separator/>
-        <MenuItem Header="_Save" InputGesture="Ctrl+S"/>
-        <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S"/>
+        <MenuItem Header="_Save" InputGesture="Ctrl+S" Command="{Binding SaveCurrent}"/>
+        <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsDialog}"/>
         <MenuItem Header="Save A_ll"/>
         <Separator/>
         <MenuItem Header="_Export..." InputGesture="Ctrl+E"/>
@@ -45,7 +46,7 @@
       </MenuItem>
     </controls:HKMenu>
 
-    <tabalonia:TabsControl IsVisible="{Binding AnyOpenFiles.Value}"
+    <tabalonia:TabsControl IsVisible="{Binding !!OpenFiles.Count}"
                            ItemsSource="{Binding OpenFiles}"
                            SelectedIndex="{Binding SelectedTabIndex.Value}"
                            ShowDefaultAddButton="{x:False}"
@@ -63,6 +64,6 @@
         </DataTemplate>
       </TabControl.ItemTemplate>
     </tabalonia:TabsControl>
-    <TextBlock IsVisible="{Binding !AnyOpenFiles.Value}" Text="no tabs open"/>
+    <TextBlock IsVisible="{Binding !OpenFiles.Count}" Text="no tabs open"/>
   </StackPanel>
 </UserControl>

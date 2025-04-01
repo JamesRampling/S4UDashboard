@@ -1,7 +1,10 @@
 using System;
+using System.IO;
 
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 
+using S4UDashboard.Model;
 using S4UDashboard.Reactive;
 
 namespace S4UDashboard.ViewModels;
@@ -11,42 +14,105 @@ public class MainViewModel : ViewModelBase
     public Window? MainWindow { get; }
 
     public ReactiveList<FileTabViewModel> OpenFiles { get; } = [];
-    public ComputedCell<bool> AnyOpenFiles { get; }
     public ReactiveCell<int> SelectedTabIndex { get; } = new(-1);
 
     public MainViewModel(Window? mainWindow)
     {
         if ((MainWindow = mainWindow) != null) MainWindow.Closing += HandleClosing;
-
-        AnyOpenFiles = new(() => OpenFiles.Count != 0);
     }
     public MainViewModel() : this(null) { }
 
-    public void MakeNew() => OpenFiles.Add(new(new Model.DatasetModel
+    public static readonly FilePickerFileType SDSFileType = new("Sensing4U Dataset")
     {
-        FilePath = "/foo",
-        AnnotatedData = new Model.AnnotatedDataModel
+        Patterns = ["*.sds"],
+        MimeTypes = ["application/s4udashboard"],
+    };
+
+    public async void OpenFileDialog()
+    {
+        if (MainWindow == null) return;
+
+        var files = await MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            AnnotatedName = "Foo",
-        },
-        CalculatedData = new Model.CalculatedDataModel
+            Title = "Open File",
+            AllowMultiple = true,
+            FileTypeFilter = [SDSFileType],
+        });
+
+        if (files == null) return;
+
+        foreach (var file in files)
         {
-            Mean = 0.0,
-            Minimum = 0.0,
-            Maximum = 0.0
-        },
-        SensorData = new Model.SensorDataModel
+            using var reader = new BinaryReader(await file.OpenReadAsync());
+            var dataset = reader.Read(Serializers.DatasetDeserializer(file.Path));
+            OpenFiles.Add(new(dataset));
+        }
+        SelectTab(OpenFiles.Count);
+    }
+
+    public async void SaveCurrent()
+    {
+        if (MainWindow == null) return;
+        if (SelectedTabIndex.Value < 0) return;
+
+        var current = OpenFiles[SelectedTabIndex.Value];
+        var file = await MainWindow.StorageProvider.TryGetFileFromPathAsync(current.Dataset.Value.FilePath);
+
+        if (file == null) return;
+
+        SaveDataset(current.Dataset.Value, await file.OpenWriteAsync());
+    }
+
+    public async void SaveAsDialog()
+    {
+        if (MainWindow == null) return;
+        if (SelectedTabIndex.Value < 0) return;
+
+        var file = await MainWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save As",
+            DefaultExtension = "sds",
+            FileTypeChoices = [SDSFileType],
+            ShowOverwritePrompt = true,
+        });
+
+        if (file == null) return;
+
+        var current = OpenFiles[SelectedTabIndex.Value];
+        SaveDataset(current.Dataset.Value, await file.OpenWriteAsync());
+    }
+
+    private static void SaveDataset(DatasetModel dataset, Stream output)
+    {
+        using var writer = new BinaryWriter(output);
+        Serializers.DatasetSerializer(writer, dataset);
+    }
+
+    public void MakeNew()
+    {
+        var sensors = new SensorDataModel
         {
             MeasurementIdentifier = "temperature",
-            SensorNames = [],
-            SampleTimes = [],
-            Samples = [],
-        },
-    }));
+            SensorNames = ["bedroom", "office", "kitchen"],
+            SampleTimes = [new(2025, 4, 1), new(2025, 4, 2), new(2025, 4, 3)],
+            Samples = new([26, 22, 28, 21, 23, 21, 29, 31, 32], 3, 3),
+        };
+
+        OpenFiles.Add(new(new DatasetModel
+        {
+            FilePath = new("file:///tmp/foo"),
+            AnnotatedData = new AnnotatedDataModel
+            {
+                AnnotatedName = "Foo",
+            },
+            CalculatedData = DataProcessing.Instance.CalculateAuxilliaryData(sensors),
+            SensorData = sensors,
+        }));
+    }
 
     private void IfAnyTabs(Action action)
     {
-        if (AnyOpenFiles.Value) action();
+        if (SelectedTabIndex.Value >= 0) action();
     }
 
     public void SelectTab(int index) => IfAnyTabs(() => SelectedTabIndex.Value = Math.Clamp(index, 0, OpenFiles.Count - 1));

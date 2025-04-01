@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Immutable;
-using System.IO;
+using System.Linq;
 
 namespace S4UDashboard.Model;
 
@@ -11,8 +11,8 @@ namespace S4UDashboard.Model;
 /// </summary>
 public readonly record struct DatasetModel
 {
-    public required string FilePath { get; init; }
-    public string FileName => Path.GetFileNameWithoutExtension(FilePath);
+    public required Uri FilePath { get; init; }
+    public string FileName => FilePath.AbsolutePath;
 
     public required AnnotatedDataModel AnnotatedData { get; init; }
     public required CalculatedDataModel CalculatedData { get; init; }
@@ -49,5 +49,5 @@ public readonly record struct SensorDataModel
     public required ImmutableArray<string> SensorNames { get; init; }
     public required ImmutableArray<DateTime> SampleTimes { get; init; }
 
-    public required ImmutableArray<ImmutableArray<double>> Samples { get; init; }
+    public required Immutable2DArray<double> Samples { get; init; }
 }
