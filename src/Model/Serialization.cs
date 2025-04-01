@@ -44,7 +44,7 @@ public static class Serializers
         w.WriteEnumerable((w, i) => w.WriteEnumerable((w, i) => w.Write(i), i), i.Samples);
     };
 
-    public static Func<BinaryReader, DatasetModel> DatasetDeserializer = (r) =>
+    public readonly static Func<BinaryReader, DatasetModel> DatasetDeserializer = (r) =>
     {
         int version;
 
