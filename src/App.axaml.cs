@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 
@@ -19,16 +20,13 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var window = new MainWindow();
-            window.DataContext = new MainViewModel(window);
 
+            ServiceProvider.AddService(window);
+            ServiceProvider.AddService(window as TopLevel);
+            ServiceProvider.AddService(window.StorageProvider);
+
+            window.DataContext = new MainViewModel();
             desktop.MainWindow = window;
-        }
-        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
-        {
-            singleViewPlatform.MainView = new MainView
-            {
-                DataContext = new MainViewModel(null)
-            };
         }
 
         base.OnFrameworkInitializationCompleted();
