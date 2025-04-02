@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace S4UDashboard.Reactive;
@@ -14,6 +15,7 @@ public class ReactiveCell<T>(T inner) : INotifyPropertyChanged
         }
         set
         {
+            if (EqualityComparer<T>.Default.Equals(inner, value)) return;
             inner = value;
 
             EffectManager.Trigger(this, nameof(Value));
@@ -30,6 +32,8 @@ public class ComputedCell<T> : INotifyPropertyChanged
     {
         EffectManager.WatchEffect(() =>
         {
+            var value = update();
+            if (EqualityComparer<T>.Default.Equals(_value, value)) return;
             _value = update();
 
             EffectManager.Trigger(this, nameof(Value));

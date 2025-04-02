@@ -58,7 +58,7 @@ public static class Serializers
         w.WriteRawEnumerable(WriteDouble, i.Samples.EnumerateFlat());
     };
 
-    public readonly static Func<Uri, Func<BinaryReader, DatasetModel>> DatasetDeserializer = (path) => (r) =>
+    public readonly static Func<BinaryReader, DatasetModel> DatasetDeserializer = (r) =>
     {
         int version;
 
@@ -71,7 +71,6 @@ public static class Serializers
 
         return new DatasetModel
         {
-            FilePath = path,
             AnnotatedData = annotatedData,
             SensorData = sensorData,
             CalculatedData = calculatedData,

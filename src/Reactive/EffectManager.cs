@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace S4UDashboard.Reactive;
@@ -62,6 +63,35 @@ public static class EffectManager
             EffectStack.Pop();
         }
         Effect();
+    }
+
+    /// <summary>
+    /// Watches a source and executes an effect when it is triggered.
+    /// </summary>
+    public static void Watch<T>(Func<T> source, Action<T> effect)
+    {
+        EffectStack.Push(() => effect(source()));
+        source();
+        EffectStack.Pop();
+    }
+
+    /// <summary>Watches an array of sources an executes an effect when they are triggered.
+    /// <para>
+    /// The sources and effect are untyped delegates, and as such the caller must take care that
+    /// the parameters of the effect match the values returned by the sources.
+    /// </para>
+    /// </summary>
+    public static void Watch(Delegate[] sources, Delegate effect)
+    {
+        void Effect()
+        {
+            object?[] parameters = sources.Select(s => s.DynamicInvoke()).ToArray();
+            effect.DynamicInvoke(parameters);
+        }
+
+        EffectStack.Push(Effect);
+        foreach (var source in sources) source.DynamicInvoke();
+        EffectStack.Pop();
     }
 
     /// <summary>Makes it such that there is no active effect at the start of <c>scope</c>.

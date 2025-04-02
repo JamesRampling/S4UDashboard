@@ -1,98 +1,82 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 
 using S4UDashboard.Model;
 using S4UDashboard.Reactive;
+using S4UDashboard.Views;
 
 namespace S4UDashboard.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {
-    public Window? MainWindow { get; }
-
     public ReactiveList<FileTabViewModel> OpenFiles { get; } = [];
     public ReactiveCell<int> SelectedTabIndex { get; } = new(-1);
 
-    public MainViewModel(Window? mainWindow)
-    {
-        if ((MainWindow = mainWindow) != null) MainWindow.Closing += HandleClosing;
-    }
-    public MainViewModel() : this(null) { }
+    public ReactiveCommand QuitApp { get; } = new(
+        () => ServiceProvider.GetService<MainWindow>() is not null,
+        _ => ServiceProvider.ExpectService<MainWindow>().Close());
 
-    public static readonly FilePickerFileType SDSFileType = new("Sensing4U Dataset")
-    {
-        Patterns = ["*.sds"],
-        MimeTypes = ["application/s4udashboard"],
-    };
+    public ReactiveCommand GoNextTab { get; }
+    public ReactiveCommand GoPrevTab { get; }
+    public ReactiveCommand CloseSelectedTab { get; }
 
-    public async void OpenFileDialog()
-    {
-        if (MainWindow == null) return;
+    public ReactiveCommand OpenFileDialog { get; }
+    public ReactiveCommand SaveCurrent { get; }
+    public ReactiveCommand SaveAsDialog { get; }
+    public ReactiveCommand SaveAll { get; }
 
-        var files = await MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+    public MainViewModel()
+    {
+        var window = ServiceProvider.GetService<MainWindow>();
+        if (window != null) window.Closing += HandleClosing;
+
+        bool AnyTabOpen() => SelectedTabIndex.Value >= 0;
+        void SelectTab(int index) => SelectedTabIndex.Value = Math.Clamp(index, 0, OpenFiles.Count - 1);
+
+        GoNextTab = new(AnyTabOpen, _ => SelectTab(SelectedTabIndex.Value + 1));
+        GoPrevTab = new(AnyTabOpen, _ => SelectTab(SelectedTabIndex.Value + 1));
+        CloseSelectedTab = new(AnyTabOpen, _ =>
         {
-            Title = "Open File",
-            AllowMultiple = true,
-            FileTypeFilter = [SDSFileType],
+            var initial = SelectedTabIndex.Value;
+            OpenFiles.RemoveAt(initial);
+            SelectTab(initial);
         });
 
-        if (files == null) return;
-
-        foreach (var file in files)
+        OpenFileDialog = new(() => true, async _ =>
         {
-            using var reader = new BinaryReader(await file.OpenReadAsync());
-            var dataset = reader.Read(Serializers.DatasetDeserializer(file.Path));
-            OpenFiles.Add(new(dataset));
-        }
-        SelectTab(OpenFiles.Count);
-    }
+            var storage = ServiceProvider.ExpectService<IStorageProvider>();
 
-    public async void SaveCurrent()
-    {
-        if (MainWindow == null) return;
-        if (SelectedTabIndex.Value < 0) return;
+            var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Open File",
+                AllowMultiple = true,
+                FileTypeFilter = [FileTabViewModel.SDSFileType],
+            });
 
-        var current = OpenFiles[SelectedTabIndex.Value];
-        var file = await MainWindow.StorageProvider.TryGetFileFromPathAsync(current.Dataset.Value.FilePath);
+            if (files == null) return;
 
-        if (file == null) return;
-
-        SaveDataset(current.Dataset.Value, await file.OpenWriteAsync());
-    }
-
-    public async void SaveAsDialog()
-    {
-        if (MainWindow == null) return;
-        if (SelectedTabIndex.Value < 0) return;
-
-        var file = await MainWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-        {
-            Title = "Save As",
-            DefaultExtension = "sds",
-            FileTypeChoices = [SDSFileType],
-            ShowOverwritePrompt = true,
+            OpenFiles.AddRange(await Task.WhenAll(
+                files.Select(file => FileTabViewModel.FromFile(file))));
+            SelectTab(OpenFiles.Count);
         });
 
-        if (file == null) return;
-
-        var current = OpenFiles[SelectedTabIndex.Value];
-        SaveDataset(current.Dataset.Value, await file.OpenWriteAsync());
-    }
-
-    private static void SaveDataset(DatasetModel dataset, Stream output)
-    {
-        using var writer = new BinaryWriter(output);
-        Serializers.DatasetSerializer(writer, dataset);
+        SaveCurrent = new(AnyTabOpen, _ => OpenFiles[SelectedTabIndex.Value].SaveCurrent());
+        SaveAsDialog = new(AnyTabOpen, _ => OpenFiles[SelectedTabIndex.Value].SaveAs());
+        SaveAll = new(() => OpenFiles.Where(f => f.Dirty.Value).Any(), _ =>
+        {
+            foreach (var tab in OpenFiles.Where(f => f.Dirty.Value)) tab.SaveCurrent();
+        });
     }
 
     public void MakeNew()
     {
         var sensors = new SensorDataModel
         {
-            MeasurementIdentifier = "temperature",
             SensorNames = ["bedroom", "office", "kitchen"],
             SampleTimes = [new(2025, 4, 1), new(2025, 4, 2), new(2025, 4, 3)],
             Samples = new([26, 22, 28, 21, 23, 21, 29, 31, 32], 3, 3),
@@ -100,33 +84,14 @@ public class MainViewModel : ViewModelBase
 
         OpenFiles.Add(new(new DatasetModel
         {
-            FilePath = new("file:///tmp/foo"),
             AnnotatedData = new AnnotatedDataModel
             {
                 AnnotatedName = "Foo",
             },
             CalculatedData = DataProcessing.Instance.CalculateAuxilliaryData(sensors),
             SensorData = sensors,
-        }));
+        }, new("file:///tmp/foo")));
     }
-
-    private void IfAnyTabs(Action action)
-    {
-        if (SelectedTabIndex.Value >= 0) action();
-    }
-
-    public void SelectTab(int index) => IfAnyTabs(() => SelectedTabIndex.Value = Math.Clamp(index, 0, OpenFiles.Count - 1));
-    public void GoNextTab() => SelectTab(SelectedTabIndex.Value + 1);
-    public void GoPrevTab() => SelectTab(SelectedTabIndex.Value - 1);
-    public void CloseSelectedTab() => IfAnyTabs(() =>
-    {
-        var initial = SelectedTabIndex.Value;
-        OpenFiles.RemoveAt(initial);
-        SelectTab(initial);
-    });
-
-    // Acts as though the window was requested to close.
-    public void QuitApp() => MainWindow?.Close();
 
     // Handles the event when the window was requested to close.
     private void HandleClosing(object? o, WindowClosingEventArgs e)
@@ -135,8 +100,9 @@ public class MainViewModel : ViewModelBase
 
         if (TryExit())
         {
-            MainWindow!.Closing -= HandleClosing;
-            MainWindow!.Close();
+            var window = ServiceProvider.ExpectService<MainWindow>();
+            window.Closing -= HandleClosing;
+            window.Close();
         }
     }
 

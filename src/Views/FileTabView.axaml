@@ -4,12 +4,59 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:S4UDashboard.ViewModels"
              xmlns:views="using:S4UDashboard.Views"
+             xmlns:system="using:System"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="S4UDashboard.Views.FileTabView"
              x:DataType="vm:FileTabViewModel">
   <Design.DataContext><vm:FileTabViewModel/></Design.DataContext>
-  <StackPanel>
-    <TextBox Text="{Binding TextField.Value}"/>
-    <Button Command="{Binding LowercasifyCommand}" Content="Lowercasify"/>
-  </StackPanel>
+  <DockPanel>
+    <Grid ColumnDefinitions="Auto,3*,Auto,2*,Auto,2*" RowDefinitions="Auto" DockPanel.Dock="Top">
+      <Grid.Styles>
+        <Style Selector="Label">
+          <Setter Property="HorizontalAlignment" Value="Right"/>
+          <Setter Property="VerticalAlignment" Value="Center"/>
+          <Setter Property="Margin" Value="2 0 2 0"/>
+        </Style>
+        <Style Selector="NumericUpDown.HasMaximum">
+          <Setter Property="Maximum" Value="{Binding #upper.Value}"/>
+        </Style>
+        <Style Selector="NumericUpDown.HasMinimum">
+          <Setter Property="Minimum" Value="{Binding #lower.Value}"/>
+        </Style>
+      </Grid.Styles>
+
+      <Label Content="Name" Target="name" Grid.Column="0"/>
+      <TextBox Name="name" Text="{Binding NameField.Value}" Watermark="Name" Grid.Column="1">
+        <TextBox.InnerRightContent>
+          <StackPanel Orientation="Horizontal">
+            <StackPanel.Styles>
+              <!-- Make PathIcon colour change when button is disabled. -->
+              <Style Selector="Button:disabled PathIcon">
+                <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}"/>
+              </Style>
+            </StackPanel.Styles>
+
+            <Button Command="{Binding UpdateAnnotatedName}" ToolTip.Tip="Update Annotated Name">
+              <PathIcon Width="10" Height="10" Data="{StaticResource edit_regular}"/>
+            </Button>
+            <Button Command="{Binding ClearAnnotatedName}" ToolTip.Tip="Clear Annotated Name" Margin="1 0 1 0">
+              <PathIcon Width="10" Height="10" Data="{StaticResource dismiss_regular}"/>
+            </Button>
+          </StackPanel>
+        </TextBox.InnerRightContent>
+      </TextBox>
+
+      <Label Content="Lower Threshold" Target="lower" Grid.Column="2"/>
+      <NumericUpDown Name="lower"
+                     Value="{Binding LowerField.Value}"
+                     Classes.HasMaximum="{Binding #upper.Value, Converter={x:Static ObjectConverters.IsNotNull}}"
+                     Grid.Column="3"/>
+
+      <Label Content="Upper Threshold" Target="upper" Grid.Column="4"/>
+      <NumericUpDown Name="upper"
+                     Value="{Binding UpperField.Value}"
+                     Classes.HasMinimum="{Binding #lower.Value, Converter={x:Static ObjectConverters.IsNotNull}}"
+                     Grid.Column="5"/>
+    </Grid>
+  </DockPanel>
 </UserControl>

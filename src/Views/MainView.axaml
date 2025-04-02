@@ -18,7 +18,7 @@
         <Separator/>
         <MenuItem Header="_Save" InputGesture="Ctrl+S" Command="{Binding SaveCurrent}"/>
         <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsDialog}"/>
-        <MenuItem Header="Save A_ll"/>
+        <MenuItem Header="Save A_ll" Command="{Binding SaveAll}"/>
         <Separator/>
         <MenuItem Header="_Export..." InputGesture="Ctrl+E"/>
         <MenuItem Header="E_xport As..." InputGesture="Ctrl+Shift+E"/>
@@ -31,7 +31,6 @@
       <MenuItem Header="_View">
         <MenuItem Header="So_rt..."/>
         <MenuItem Header="_Search..." InputGesture="Ctrl+F"/>
-        <MenuItem Header="_Thresholds..." InputGesture="Ctrl+Shift+T"/>
         <Separator/>
         <MenuItem Header="Next Dataset" InputGesture="Ctrl+OEMCloseBrackets" Command="{Binding GoNextTab}"/>
         <MenuItem Header="Previous Dataset" InputGesture="Ctrl+OEMOpenBrackets" Command="{Binding GoPrevTab}"/>
@@ -53,6 +52,12 @@
                            LeftThumbWidth="0"
                            RightThumbWidth="0"
                            LastTabClosedAction="{x:Null}">
+      <tabalonia:TabsControl.Styles>
+        <Style Selector="TextBlock.Italic">
+          <Setter Property="FontStyle" Value="Italic"/>
+        </Style>
+      </tabalonia:TabsControl.Styles>
+
       <TabControl.ContentTemplate>
         <DataTemplate DataType="vm:FileTabViewModel">
           <views:FileTabView/>
@@ -60,7 +65,7 @@
       </TabControl.ContentTemplate>
       <TabControl.ItemTemplate>
         <DataTemplate DataType="vm:FileTabViewModel">
-          <TextBlock Text="{Binding Header}" />
+          <TextBlock Text="{Binding Header.Value}" Classes.Italic="{Binding Dirty.Value}"/>
         </DataTemplate>
       </TabControl.ItemTemplate>
     </tabalonia:TabsControl>

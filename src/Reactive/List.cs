@@ -33,6 +33,18 @@ public partial class ReactiveList<T> : INotifyPropertyChanged, INotifyCollection
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
 }
 
+partial class ReactiveList<T>
+{
+    public void AddRange(IEnumerable<T> collection)
+    {
+        var startingIndex = _inner.Count;
+        _inner.AddRange(collection);
+        var length = _inner.Count - startingIndex;
+
+        TriggerBacking(new(NotifyCollectionChangedAction.Add, _inner.Slice(startingIndex, length), startingIndex));
+    }
+}
+
 partial class ReactiveList<T> : IList<T>
 {
     public int Count

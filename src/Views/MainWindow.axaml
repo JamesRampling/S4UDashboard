@@ -5,6 +5,8 @@
         xmlns:views="using:S4UDashboard.Views"
         mc:Ignorable="d" Width="800" Height="600"
         x:Class="S4UDashboard.Views.MainWindow"
+        MinWidth="680"
+        MinHeight="340"
         Icon="/Assets/icon.ico"
         Title="Sensing4U Dashboard">
   <views:MainView/>

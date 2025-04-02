@@ -11,9 +11,6 @@ namespace S4UDashboard.Model;
 /// </summary>
 public readonly record struct DatasetModel
 {
-    public required Uri FilePath { get; init; }
-    public string FileName => FilePath.AbsolutePath;
-
     public required AnnotatedDataModel AnnotatedData { get; init; }
     public required CalculatedDataModel CalculatedData { get; init; }
     public required SensorDataModel SensorData { get; init; }
@@ -44,8 +41,6 @@ public readonly record struct CalculatedDataModel
 /// </summary>
 public readonly record struct SensorDataModel
 {
-    public required string MeasurementIdentifier { get; init; }
-
     public required ImmutableArray<string> SensorNames { get; init; }
     public required ImmutableArray<DateTime> SampleTimes { get; init; }
 
