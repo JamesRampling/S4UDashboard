@@ -44,7 +44,7 @@ public class MainViewModel : ViewModelBase
         {
             var initial = SelectedTabIndex.Value;
             OpenFiles.RemoveAt(initial);
-            SelectTab(initial);
+            if (OpenFiles.Count > 0) SelectTab(initial);
         });
 
         OpenFileDialog = new(() => true, async _ =>

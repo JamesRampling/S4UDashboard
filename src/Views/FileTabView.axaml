@@ -58,5 +58,47 @@
                      Classes.HasMinimum="{Binding #lower.Value, Converter={x:Static ObjectConverters.IsNotNull}}"
                      Grid.Column="5"/>
     </Grid>
+
+    <Grid ColumnDefinitions="Auto,3*,Auto,3*,Auto,3*,Auto,4*,Auto" RowDefinitions="Auto" DockPanel.Dock="Bottom">
+      <Grid.Styles>
+        <Style Selector="TextBlock">
+          <Setter Property="VerticalAlignment" Value="Center"/>
+          <Setter Property="Margin" Value="2 0 2 0"/>
+        </Style>
+        <Style Selector="Border">
+          <Setter Property="Background" Value="{DynamicResource TextControlBackgroundDisabled}"/>
+          <Setter Property="BorderBrush" Value="{DynamicResource TextControlBorderBrushDisabled}"/>
+          <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}"/>
+          <Setter Property="Margin" Value="{DynamicResource TextControlBorderThemeThickness}"/>
+        </Style>
+      </Grid.Styles>
+
+      <TextBlock Text="Mean" Grid.Column="0"/>
+      <Border Grid.Column="1">
+        <TextBlock Text="{Binding Dataset.Value.CalculatedData.Mean}"></TextBlock>
+      </Border>
+
+      <TextBlock Text="Minimum" Grid.Column="2"/>
+      <Border Grid.Column="3">
+        <TextBlock Text="{Binding Dataset.Value.CalculatedData.Minimum}"/>
+      </Border>
+
+      <TextBlock Text="Maximum" Grid.Column="4"/>
+      <Border Grid.Column="5">
+        <TextBlock Text="{Binding Dataset.Value.CalculatedData.Maximum}"/>
+      </Border>
+
+      <TextBlock Text="Measurement" Grid.Column="6"/>
+      <Border Grid.Column="7">
+        <TextBlock Text="{Binding Dataset.Value.SensorData.MeasurementIdentifier}"/>
+      </Border>
+
+      <CheckBox Content="Visualise Thresholds?"
+                IsChecked="{Binding VisualiseCells.Value}"
+                Margin="6 0 4 0"
+                Grid.Column="8"/>
+    </Grid>
+
+    <DataGrid/>
   </DockPanel>
 </UserControl>

@@ -19,6 +19,8 @@ public class FileTabViewModel : ViewModelBase
     public ReactiveCell<double?> LowerField { get; }
     public ReactiveCell<double?> UpperField { get; }
 
+    public ReactiveCell<bool> VisualiseCells { get; } = new(false);
+
     public ComputedCell<string> Header { get; }
 
     public ReactiveCommand UpdateAnnotatedName { get; }

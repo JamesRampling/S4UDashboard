@@ -50,10 +50,10 @@ public class DataProcessing
             {
                 case 0:
                     return middleIdx;
-                case var c when c < 0:
+                case < 0:
                     upperBound = middleIdx;
                     break;
-                case var c when c > 0:
+                case > 0:
                     lowerBound = middleIdx + 1;
                     break;
             }
