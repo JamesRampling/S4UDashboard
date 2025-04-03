@@ -77,6 +77,7 @@ public class MainViewModel : ViewModelBase
     {
         var sensors = new SensorDataModel
         {
+            MeasurementIdentifier = "temperature",
             SensorNames = ["bedroom", "office", "kitchen"],
             SampleTimes = [new(2025, 4, 1), new(2025, 4, 2), new(2025, 4, 3)],
             Samples = new([26, 22, 28, 21, 23, 21, 29, 31, 32], 3, 3),
