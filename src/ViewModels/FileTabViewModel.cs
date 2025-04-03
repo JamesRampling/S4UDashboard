@@ -26,14 +26,14 @@ public class FileTabViewModel : ViewModelBase
     public ReactiveCommand UpdateAnnotatedName { get; }
     public ReactiveCommand ClearAnnotatedName { get; }
 
-    public FileTabViewModel(DatasetModel dataset, Uri location)
+    public FileTabViewModel(ReactiveCell<DatasetModel> dataset, Uri location)
     {
         Location = new(location);
-        Dataset = new(dataset);
+        Dataset = dataset;
 
-        NameField = new(dataset.AnnotatedData.AnnotatedName ?? "");
-        LowerField = new(dataset.AnnotatedData.LowerThreshold);
-        UpperField = new(dataset.AnnotatedData.UpperThreshold);
+        NameField = new(dataset.Value.AnnotatedData.AnnotatedName ?? "");
+        LowerField = new(dataset.Value.AnnotatedData.LowerThreshold);
+        UpperField = new(dataset.Value.AnnotatedData.UpperThreshold);
 
         Header = new(() => Dataset.Value.AnnotatedData.AnnotatedName ?? Location.Value.AbsolutePath);
 
@@ -59,9 +59,12 @@ public class FileTabViewModel : ViewModelBase
 
     public async static Task<FileTabViewModel> FromFile(IStorageFile file)
     {
-        using var reader = new BinaryReader(await file.OpenReadAsync());
-        var dataset = reader.Read(Serializers.DatasetDeserializer);
-        return new(dataset, file.Path);
+        // TODO: Move to DataProcessing
+        throw new NotImplementedException();
+
+        //using var reader = new BinaryReader(await file.OpenReadAsync());
+        //var dataset = reader.Read(Serializers.DatasetDeserializer);
+        //return new(dataset, file.Path);
     }
 
     public void SaveTo(Stream output)
@@ -105,7 +108,7 @@ public class FileTabViewModel : ViewModelBase
         Dataset.Value = dataset with { AnnotatedData = update(dataset.AnnotatedData) };
     }
 
-    public static readonly FilePickerFileType SDSFileType = new("Sensing4U Dataset")
+    public static readonly FilePickerFileType SDSFileType = new("Sensing4U Dataset (*.sds)")
     {
         Patterns = ["*.sds"],
         MimeTypes = ["application/s4udashboard"],

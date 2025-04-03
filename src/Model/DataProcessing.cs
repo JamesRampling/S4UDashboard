@@ -1,13 +1,30 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
+using S4UDashboard.Reactive;
+
 namespace S4UDashboard.Model;
+
+public enum SortMode
+{
+    Name,
+    Measurement,
+
+    Unsorted,
+}
 
 public class DataProcessing
 {
     private DataProcessing() { }
     public readonly static DataProcessing Instance = new();
+
+    public Dictionary<Uri, ReactiveCell<DatasetModel>> Datasets = [];
+    public ReactiveCell<SortMode> Mode { get; } = new(SortMode.Unsorted);
+
+    // TODO: order by sort mode
+    public ImmutableList<DatasetModel> Sorted => Datasets.Values.Select(c => c.Value).Order().ToImmutableList();
 
     /// <summary>
     /// Given a <c>SensorDataModel</c> constructs and returns a <c>CalculatedDataModel</c> based
@@ -37,7 +54,7 @@ public class DataProcessing
     /// Performs a binary search on <c>sorted</c>, comparing <c>needle</c> to each element
     /// after having been mapped by <c>selector</c>.
     /// </summary>
-    public int FindByInSorted<T, S>(IList<T> sorted, Func<T, S> selector, S needle) where S : IComparable<S>
+    public int FindByInSorted<T, S>(IReadOnlyList<T> sorted, Func<T, S> selector, S needle) where S : IComparable<S>
     {
         int lowerBound = 0, upperBound = sorted.Count;
 

@@ -1,5 +1,6 @@
 using System;
-using System.IO;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -14,8 +15,9 @@ namespace S4UDashboard.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {
-    public ReactiveList<FileTabViewModel> OpenFiles { get; } = [];
     public ReactiveCell<int> SelectedTabIndex { get; } = new(-1);
+
+    private ReactiveList<FileTabViewModel> TabList { get; } = [];
 
     public ReactiveCommand QuitApp { get; } = new(
         () => ServiceProvider.GetService<MainWindow>() is not null,
@@ -36,15 +38,15 @@ public class MainViewModel : ViewModelBase
         if (window != null) window.Closing += HandleClosing;
 
         bool AnyTabOpen() => SelectedTabIndex.Value >= 0;
-        void SelectTab(int index) => SelectedTabIndex.Value = Math.Clamp(index, 0, OpenFiles.Count - 1);
+        void SelectTab(int index) => SelectedTabIndex.Value = Math.Clamp(index, 0, TabList.Count - 1);
 
         GoNextTab = new(AnyTabOpen, _ => SelectTab(SelectedTabIndex.Value + 1));
         GoPrevTab = new(AnyTabOpen, _ => SelectTab(SelectedTabIndex.Value + 1));
         CloseSelectedTab = new(AnyTabOpen, _ =>
         {
             var initial = SelectedTabIndex.Value;
-            OpenFiles.RemoveAt(initial);
-            if (OpenFiles.Count > 0) SelectTab(initial);
+            TabList.RemoveAt(initial);
+            if (TabList.Count > 0) SelectTab(initial);
         });
 
         OpenFileDialog = new(() => true, async _ =>
@@ -60,16 +62,16 @@ public class MainViewModel : ViewModelBase
 
             if (files == null) return;
 
-            OpenFiles.AddRange(await Task.WhenAll(
+            TabList.AddRange(await Task.WhenAll(
                 files.Select(file => FileTabViewModel.FromFile(file))));
-            SelectTab(OpenFiles.Count);
+            SelectTab(TabList.Count);
         });
 
-        SaveCurrent = new(AnyTabOpen, _ => OpenFiles[SelectedTabIndex.Value].SaveCurrent());
-        SaveAsDialog = new(AnyTabOpen, _ => OpenFiles[SelectedTabIndex.Value].SaveAs());
-        SaveAll = new(() => OpenFiles.Where(f => f.Dirty.Value).Any(), _ =>
+        SaveCurrent = new(AnyTabOpen, _ => TabList[SelectedTabIndex.Value].SaveCurrent());
+        SaveAsDialog = new(AnyTabOpen, _ => TabList[SelectedTabIndex.Value].SaveAs());
+        SaveAll = new(() => TabList.Where(f => f.Dirty.Value).Any(), _ =>
         {
-            foreach (var tab in OpenFiles.Where(f => f.Dirty.Value)) tab.SaveCurrent();
+            foreach (var tab in TabList.Where(f => f.Dirty.Value)) tab.SaveCurrent();
         });
     }
 
@@ -83,7 +85,8 @@ public class MainViewModel : ViewModelBase
             Samples = new([26, 22, 28, 21, 23, 21, 29, 31, 32], 3, 3),
         };
 
-        OpenFiles.Add(new(new DatasetModel
+        /* TODO: Move to data processing
+        TabList.Add(new(new DatasetModel
         {
             AnnotatedData = new AnnotatedDataModel
             {
@@ -92,6 +95,7 @@ public class MainViewModel : ViewModelBase
             CalculatedData = DataProcessing.Instance.CalculateAuxilliaryData(sensors),
             SensorData = sensors,
         }, new("file:///tmp/foo")));
+        */
     }
 
     // Handles the event when the window was requested to close.

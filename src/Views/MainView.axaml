@@ -45,8 +45,8 @@
       </MenuItem>
     </controls:HKMenu>
 
-    <tabalonia:TabsControl IsVisible="{Binding !!OpenFiles.Count}"
-                           ItemsSource="{Binding OpenFiles}"
+    <tabalonia:TabsControl IsVisible="{Binding !!TabList.Count}"
+                           ItemsSource="{Binding TabList}"
                            SelectedIndex="{Binding SelectedTabIndex.Value}"
                            ShowDefaultAddButton="{x:False}"
                            LeftThumbWidth="0"
@@ -69,6 +69,6 @@
         </DataTemplate>
       </TabControl.ItemTemplate>
     </tabalonia:TabsControl>
-    <TextBlock IsVisible="{Binding !OpenFiles.Count}" Text="no tabs open"/>
+    <TextBlock IsVisible="{Binding !TabList.Count}" Text="no tabs open"/>
   </StackPanel>
 </UserControl>
