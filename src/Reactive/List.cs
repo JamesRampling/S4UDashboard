@@ -43,6 +43,19 @@ partial class ReactiveList<T>
 
         TriggerBacking(new(NotifyCollectionChangedAction.Add, _inner.Slice(startingIndex, length), startingIndex));
     }
+
+    public int FindIndex(Predicate<T> match)
+    {
+        TrackBacking();
+
+        int i = 0;
+        foreach (var item in _inner)
+        {
+            if (match(item)) return i;
+            i++;
+        }
+        return -1;
+    }
 }
 
 partial class ReactiveList<T> : IList<T>

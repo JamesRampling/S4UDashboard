@@ -11,7 +11,7 @@ namespace S4UDashboard.ViewModels;
 
 public class FileTabViewModel : ViewModelBase
 {
-    public ReactiveCell<Uri> Location { get; }
+    public ReactiveCell<ILocation> Location { get; }
     public ReactiveCell<DatasetModel> Dataset { get; }
 
     public ReactiveCell<bool> Dirty { get; } = new(false);
@@ -26,7 +26,7 @@ public class FileTabViewModel : ViewModelBase
     public ReactiveCommand UpdateAnnotatedName { get; }
     public ReactiveCommand ClearAnnotatedName { get; }
 
-    public FileTabViewModel(ReactiveCell<DatasetModel> dataset, Uri location)
+    public FileTabViewModel(ReactiveCell<DatasetModel> dataset, ILocation location)
     {
         Location = new(location);
         Dataset = dataset;
@@ -35,7 +35,7 @@ public class FileTabViewModel : ViewModelBase
         LowerField = new(dataset.Value.AnnotatedData.LowerThreshold);
         UpperField = new(dataset.Value.AnnotatedData.UpperThreshold);
 
-        Header = new(() => Dataset.Value.AnnotatedData.AnnotatedName ?? Location.Value.AbsolutePath);
+        Header = new(() => Dataset.Value.AnnotatedData.AnnotatedName ?? Location.Value.LocationHint);
 
         UpdateAnnotatedName = new(
             () => NameField.Value.Trim() != Dataset.Value.AnnotatedData.AnnotatedName
@@ -57,30 +57,15 @@ public class FileTabViewModel : ViewModelBase
             _ => Dirty.Value = true);
     }
 
-    public async static Task<FileTabViewModel> FromFile(IStorageFile file)
+    public static FileTabViewModel FromLocation(ILocation location)
     {
-        // TODO: Move to DataProcessing
-        throw new NotImplementedException();
-
-        //using var reader = new BinaryReader(await file.OpenReadAsync());
-        //var dataset = reader.Read(Serializers.DatasetDeserializer);
-        //return new(dataset, file.Path);
+        var dataset = DataProcessing.Instance.LoadDataset(location);
+        return new(dataset, location);
     }
 
-    public void SaveTo(Stream output)
+    public void SaveCurrent()
     {
-        using var writer = new BinaryWriter(output);
-        Serializers.DatasetSerializer(writer, Dataset.Value);
-    }
-
-    public async void SaveCurrent()
-    {
-        var storage = ServiceProvider.ExpectService<IStorageProvider>();
-
-        var file = await storage.TryGetFileFromPathAsync(Location.Value);
-        if (file == null) return;
-
-        SaveTo(await file.OpenWriteAsync());
+        DataProcessing.Instance.SaveDataset(Location.Value);
         Dirty.Value = false;
     }
 
@@ -94,11 +79,12 @@ public class FileTabViewModel : ViewModelBase
             FileTypeChoices = [SDSFileType],
             ShowOverwritePrompt = true,
         });
-
         if (file == null) return;
 
-        SaveTo(await file.OpenWriteAsync());
-        Location.Value = file.Path;
+        var destination = new FileLocation(file.Path);
+        DataProcessing.Instance.SaveDatasetAs(Location.Value, destination);
+
+        Location.Value = destination;
         Dirty.Value = false;
     }
 

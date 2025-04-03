@@ -13,8 +13,8 @@
   <StackPanel>
     <controls:HKMenu>
       <MenuItem Header="_File">
-        <MenuItem Header="Make New" Command="{Binding MakeNew}"/>
         <MenuItem Header="_Open..." InputGesture="Ctrl+O" Command="{Binding OpenFileDialog}"/>
+        <MenuItem Header="Generate Sample Data" InputGesture="Ctrl+A" Command="{Binding GenerateSample}"/>
         <Separator/>
         <MenuItem Header="_Save" InputGesture="Ctrl+S" Command="{Binding SaveCurrent}"/>
         <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsDialog}"/>
@@ -49,6 +49,7 @@
                            ItemsSource="{Binding TabList}"
                            SelectedIndex="{Binding SelectedTabIndex.Value}"
                            ShowDefaultAddButton="{x:False}"
+                           CloseItemCommand="{Binding TryCloseTabCommand}"
                            LeftThumbWidth="0"
                            RightThumbWidth="0"
                            LastTabClosedAction="{x:Null}">

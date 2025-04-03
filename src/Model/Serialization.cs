@@ -67,7 +67,7 @@ public static class Serializers
 
         var annotatedData = r.Read(AnnotatedDataDeserializer);
         var sensorData = r.Read(SensorDataDeserializer);
-        var calculatedData = DataProcessing.Instance.CalculateAuxilliaryData(sensorData);
+        var calculatedData = DataProcessing.CalculateAuxilliaryData(sensorData);
 
         return new DatasetModel
         {
