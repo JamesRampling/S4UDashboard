@@ -71,8 +71,7 @@ public class MainViewModel : ViewModelBase
             var locations = files.Select(f => new FileLocation(f.Path));
             var fileLocations = TabList
                 .Select(vm => vm.Location.Value)
-                .Where(loc => loc is FileLocation)
-                .Select(loc => (FileLocation)loc);
+                .OfType<FileLocation>();
             var unique = locations.Except(fileLocations);
 
             if (locations.Count() == 1 && !unique.Any())
@@ -85,10 +84,7 @@ public class MainViewModel : ViewModelBase
             }
         });
 
-        SaveCurrent = new(
-            () => AnyTabOpen() && SelectedTab.Value!.Location.Value.IsPhysical,
-            _ => SelectedTab.Value?.SaveCurrent());
-
+        SaveCurrent = new(AnyTabOpen, _ => SelectedTab.Value?.SaveCurrent());
         SaveAsDialog = new(AnyTabOpen, _ => SelectedTab.Value?.SaveAs());
 
         SaveAll = new(() => TabList.Where(f => f.Dirty.Value).Any(), _ =>

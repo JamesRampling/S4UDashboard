@@ -65,6 +65,12 @@ public class FileTabViewModel : ViewModelBase
 
     public void SaveCurrent()
     {
+        if (!Location.Value.IsPhysical)
+        {
+            SaveAs();
+            return;
+        }
+
         DataProcessing.Instance.SaveDataset(Location.Value);
         Dirty.Value = false;
     }
