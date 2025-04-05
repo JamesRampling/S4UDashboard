@@ -49,7 +49,7 @@
                            ItemsSource="{Binding TabList}"
                            SelectedIndex="{Binding SelectedTabIndex.Value}"
                            ShowDefaultAddButton="{x:False}"
-                           CloseItemCommand="{Binding TryCloseTabCommand}"
+                           CloseItemCommand="{Binding CloseTabCommand}"
                            LeftThumbWidth="0"
                            RightThumbWidth="0"
                            LastTabClosedAction="{x:Null}">

@@ -1,12 +1,13 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+
+using MsBox.Avalonia;
+using MsBox.Avalonia.Models;
 
 using S4UDashboard.Model;
 using S4UDashboard.Reactive;
@@ -27,11 +28,13 @@ public class MainViewModel : ViewModelBase
         () => ServiceProvider.GetService<MainWindow>() is not null,
         _ => ServiceProvider.ExpectService<MainWindow>().Close());
 
+    public async Task<bool> CloseTabCommand(object o) =>
+        o is DragTabItem item && item.Header is FileTabViewModel tab && await HandleClosingTab(tab);
+
     public ReactiveCommand GoNextTab { get; }
     public ReactiveCommand GoPrevTab { get; }
     public ReactiveCommand CloseSelectedTab { get; }
 
-    public ReactiveCommand OpenFileDialog { get; }
     public ReactiveCommand SaveCurrent { get; }
     public ReactiveCommand SaveAsDialog { get; }
     public ReactiveCommand SaveAll { get; }
@@ -44,53 +47,54 @@ public class MainViewModel : ViewModelBase
         SelectedTab = new(() => TabList.ElementAtOrDefault(SelectedTabIndex.Value));
 
         bool AnyTabOpen() => SelectedTab.Value is not null;
-        void SelectTab(int index) => SelectedTabIndex.Value = Math.Clamp(index, 0, TabList.Count - 1);
 
         GoNextTab = new(AnyTabOpen, _ => SelectTab(SelectedTabIndex.Value + 1));
         GoPrevTab = new(AnyTabOpen, _ => SelectTab(SelectedTabIndex.Value - 1));
-        CloseSelectedTab = new(AnyTabOpen, _ =>
+        CloseSelectedTab = new(AnyTabOpen, async _ =>
         {
             var initial = SelectedTabIndex.Value;
-            if (TryCloseTab(SelectedTab.Value!) && TabList.Count > 0)
+            if (await HandleClosingTab(SelectedTab.Value!) && TabList.Count > 0)
                 SelectTab(initial);
         });
 
-        OpenFileDialog = new(() => true, async _ =>
+        SaveCurrent = new(AnyTabOpen, async _ => await SelectedTab.Value!.SaveCurrent());
+        SaveAsDialog = new(AnyTabOpen, async _ => await SelectedTab.Value!.SaveAs());
+
+        SaveAll = new(() => TabList.Where(f => f.Dirty.Value).Any(), async _ =>
         {
-            var storage = ServiceProvider.ExpectService<IStorageProvider>();
+            foreach (var tab in TabList.Where(f => f.Dirty.Value))
+                await tab.SaveCurrent();
+        });
+    }
 
-            var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
-            {
-                Title = "Open File",
-                AllowMultiple = true,
-                FileTypeFilter = [FileTabViewModel.SDSFileType],
-            });
+    private void SelectTab(int index) => SelectedTabIndex.Value = Math.Clamp(index, 0, TabList.Count - 1);
+    public async void OpenFileDialog()
+    {
+        var storage = ServiceProvider.ExpectService<IStorageProvider>();
 
-            if (files == null) return;
-
-            var locations = files.Select(f => new FileLocation(f.Path));
-            var fileLocations = TabList
-                .Select(vm => vm.Location.Value)
-                .OfType<FileLocation>();
-            var unique = locations.Except(fileLocations);
-
-            if (locations.Count() == 1 && !unique.Any())
-                SelectTab(TabList.FindIndex(
-                    vm => vm.Location.Value is FileLocation floc && floc == locations.Single()));
-            else if (unique.Any())
-            {
-                TabList.AddRange(unique.Select(loc => FileTabViewModel.FromLocation(loc)));
-                SelectTab(TabList.Count);
-            }
+        var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Open File",
+            AllowMultiple = true,
+            FileTypeFilter = [FileTabViewModel.SDSFileType],
         });
 
-        SaveCurrent = new(AnyTabOpen, _ => SelectedTab.Value?.SaveCurrent());
-        SaveAsDialog = new(AnyTabOpen, _ => SelectedTab.Value?.SaveAs());
+        if (files == null) return;
 
-        SaveAll = new(() => TabList.Where(f => f.Dirty.Value).Any(), _ =>
+        var locations = files.Select(f => new FileLocation(f.Path));
+        var fileLocations = TabList
+            .Select(vm => vm.Location.Value)
+            .OfType<FileLocation>();
+        var unique = locations.Except(fileLocations);
+
+        if (locations.Count() == 1 && !unique.Any())
+            SelectTab(TabList.FindIndex(
+                vm => vm.Location.Value is FileLocation floc && floc == locations.Single()));
+        else if (unique.Any())
         {
-            foreach (var tab in TabList.Where(f => f.Dirty.Value)) tab.SaveCurrent();
-        });
+            TabList.AddRange(unique.Select(loc => FileTabViewModel.FromLocation(loc)));
+            SelectTab(TabList.Count);
+        }
     }
 
     public void GenerateSample()
@@ -110,10 +114,9 @@ public class MainViewModel : ViewModelBase
         TabList.Add(FileTabViewModel.FromLocation(loc));
     }
 
-    private bool TryCloseTab(FileTabViewModel tab)
+    private async Task<bool> HandleClosingTab(FileTabViewModel tab)
     {
-        // TODO: confirm dialog
-        //if (tab.Dirty.Value) return false;
+        if (!await TryCloseTab(tab)) return false;
 
         var idx = TabList.IndexOf(tab);
         var front = idx != -1;
@@ -125,15 +128,40 @@ public class MainViewModel : ViewModelBase
         return front;
     }
 
-    public bool TryCloseTabCommand(object o) =>
-        o is DragTabItem item && item.Header is FileTabViewModel tab && TryCloseTab(tab);
+    private static async Task<bool> TryCloseTab(FileTabViewModel tab)
+    {
+        if (!tab.Dirty.Value) return true;
+
+        var box = MessageBoxManager.GetMessageBoxCustom(new MsBox.Avalonia.Dto.MessageBoxCustomParams
+        {
+            ButtonDefinitions = [
+                new ButtonDefinition { Name = "Cancel", IsCancel = true, IsDefault = true },
+                new ButtonDefinition { Name = "Don't Save" },
+                new ButtonDefinition { Name = "Save" },
+            ],
+            ContentTitle = "Close?",
+            ContentHeader = $"Do you want to save the changes you made to {tab.Header.Value}?",
+            ContentMessage = "Your changes will be lost if you don't save them.",
+            SizeToContent = SizeToContent.WidthAndHeight,
+            CanResize = false,
+            Topmost = true,
+        });
+
+        return await box.ShowAsync() switch
+        {
+            "Cancel" => false,
+            "Don't Save" => true,
+            "Save" => await tab.SaveCurrent(),
+            _ => throw new Exception("invalid message box result"),
+        };
+    }
 
     // Handles the event when the window was requested to close.
-    private void HandleClosing(object? o, WindowClosingEventArgs e)
+    private async void HandleClosing(object? o, WindowClosingEventArgs e)
     {
         e.Cancel = true;
 
-        if (TryExit())
+        if (await TryExit())
         {
             var window = ServiceProvider.ExpectService<MainWindow>();
             window.Closing -= HandleClosing;
@@ -144,11 +172,29 @@ public class MainViewModel : ViewModelBase
     // Handles actions that should be performed before the window is closed.
     // Returns whether or not the window should actually be closed, which
     // may not be true if the user cancelled the close in a dialog.
-    private bool TryExit()
+    private async Task<bool> TryExit()
     {
-        // TODO: confirm dialog
-        //if (TabList.Where(t => t.Dirty.Value).Any()) return false;
+        if (!TabList.Where(t => t.Dirty.Value).Any()) return true;
 
-        return true;
+        var box = MessageBoxManager.GetMessageBoxCustom(new MsBox.Avalonia.Dto.MessageBoxCustomParams
+        {
+            ButtonDefinitions = [
+                new ButtonDefinition { Name = "Cancel", IsCancel = true, IsDefault = true },
+                new ButtonDefinition { Name = "Discard Changes" },
+            ],
+            ContentTitle = "Quit?",
+            ContentHeader = "There are unsaved changes!",
+            ContentMessage = "If you quit now these changes will be discarded.",
+            SizeToContent = SizeToContent.WidthAndHeight,
+            CanResize = false,
+            Topmost = true,
+        });
+
+        return await box.ShowAsync() switch
+        {
+            "Cancel" => false,
+            "Discard Changes" => true,
+            _ => throw new Exception("invalid message box result"),
+        };
     }
 }

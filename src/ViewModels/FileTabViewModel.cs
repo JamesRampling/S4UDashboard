@@ -63,19 +63,17 @@ public class FileTabViewModel : ViewModelBase
         return new(dataset, location);
     }
 
-    public void SaveCurrent()
+    public async Task<bool> SaveCurrent()
     {
-        if (!Location.Value.IsPhysical)
-        {
-            SaveAs();
-            return;
-        }
+        if (!Location.Value.IsPhysical) return await SaveAs();
 
         DataProcessing.Instance.SaveDataset(Location.Value);
         Dirty.Value = false;
+
+        return true;
     }
 
-    public async void SaveAs()
+    public async Task<bool> SaveAs()
     {
         var storage = ServiceProvider.ExpectService<IStorageProvider>();
         var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
@@ -85,13 +83,15 @@ public class FileTabViewModel : ViewModelBase
             FileTypeChoices = [SDSFileType],
             ShowOverwritePrompt = true,
         });
-        if (file == null) return;
+        if (file == null) return false;
 
         var destination = new FileLocation(file.Path);
         DataProcessing.Instance.SaveDatasetAs(Location.Value, destination);
 
         Location.Value = destination;
         Dirty.Value = false;
+
+        return true;
     }
 
     private void UpdateData(Func<AnnotatedDataModel, AnnotatedDataModel> update)
