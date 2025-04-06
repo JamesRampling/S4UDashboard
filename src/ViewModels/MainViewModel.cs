@@ -20,6 +20,9 @@ namespace S4UDashboard.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {
+    private bool _closingTab = false;
+    private bool _closingWindow = false;
+
     public ReactiveCell<int> SelectedTabIndex { get; } = new(-1);
     public ReactiveCell<FileTabViewModel?> SelectedTab { get; } = new(null);
 
@@ -144,9 +147,11 @@ public class MainViewModel : ViewModelBase
         return front;
     }
 
-    private static async Task<bool> TryCloseTab(FileTabViewModel tab)
+    private async Task<bool> TryCloseTab(FileTabViewModel tab)
     {
+        if (_closingTab || _closingWindow) return false;
         if (!tab.Dirty.Value) return true;
+        _closingTab = true;
 
         var box = MessageBoxManager.GetMessageBoxCustom(new MsBox.Avalonia.Dto.MessageBoxCustomParams
         {
@@ -163,13 +168,16 @@ public class MainViewModel : ViewModelBase
             Topmost = true,
         });
 
-        return await box.ShowAsync() switch
+        var result = await box.ShowAsync() switch
         {
             "Cancel" => false,
             "Don't Save" => true,
             "Save" => await tab.SaveCurrent(),
             _ => throw new Exception("invalid message box result"),
         };
+
+        _closingTab = false;
+        return result;
     }
 
     // Handles the event when the window was requested to close.
@@ -190,7 +198,9 @@ public class MainViewModel : ViewModelBase
     // may not be true if the user cancelled the close in a dialog.
     private async Task<bool> TryExit()
     {
+        if (_closingWindow || _closingTab) return false;
         if (!TabList.Where(t => t.Dirty.Value).Any()) return true;
+        _closingWindow = true;
 
         var box = MessageBoxManager.GetMessageBoxCustom(new MsBox.Avalonia.Dto.MessageBoxCustomParams
         {
@@ -206,11 +216,14 @@ public class MainViewModel : ViewModelBase
             Topmost = true,
         });
 
-        return await box.ShowAsync() switch
+        var result = await box.ShowAsync() switch
         {
             "Cancel" => false,
             "Discard Changes" => true,
             _ => throw new Exception("invalid message box result"),
         };
+
+        _closingWindow = false;
+        return result;
     }
 }
