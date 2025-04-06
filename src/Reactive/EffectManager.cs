@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -107,4 +108,15 @@ public static class EffectManager
         scope();
         EffectStack.Pop();
     }
+
+    /// <summary>
+    /// Causes a trigger on an object that implements <c>INotifyPropertyChanged</c>
+    /// when the event is raised.
+    /// </summary>
+    public static void ShimPropertyChanged(INotifyPropertyChanged source) =>
+        source.PropertyChanged += (o, e) =>
+        {
+            if (o is null || e.PropertyName is null) return;
+            Trigger(o, e.PropertyName);
+        };
 }

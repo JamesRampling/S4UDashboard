@@ -14,7 +14,7 @@
     <controls:HKMenu>
       <MenuItem Header="_File">
         <MenuItem Header="_Open..." InputGesture="Ctrl+O" Command="{Binding OpenFileDialog}"/>
-        <MenuItem Header="Generate Sample Data" InputGesture="Ctrl+A" Command="{Binding GenerateSample}"/>
+        <MenuItem Header="Generate Sample Data" InputGesture="Ctrl+N" Command="{Binding GenerateSample}"/>
         <Separator/>
         <MenuItem Header="_Save" InputGesture="Ctrl+S" Command="{Binding SaveCurrent}"/>
         <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsDialog}"/>
@@ -48,6 +48,7 @@
     <tabalonia:TabsControl IsVisible="{Binding !!TabList.Count}"
                            ItemsSource="{Binding TabList}"
                            SelectedIndex="{Binding SelectedTabIndex.Value}"
+                           SelectedItem="{Binding SelectedTab.Value}"
                            ShowDefaultAddButton="{x:False}"
                            CloseItemCommand="{Binding CloseTabCommand}"
                            LeftThumbWidth="0"

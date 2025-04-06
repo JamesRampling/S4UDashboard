@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
 namespace S4UDashboard.Model;
@@ -23,13 +21,13 @@ public class UnnamedLocation : ILocation
     public Stream OpenWriteStream() => throw new NotSupportedException();
 }
 
-public readonly record struct FileLocation(string Path) : ILocation
+public readonly record struct FileLocation(string LocationPath) : ILocation
 {
     public FileLocation(Uri uri) : this(uri.AbsolutePath) { }
 
     public bool IsPhysical => true;
-    public string LocationHint => Path;
+    public string LocationHint => Path.GetFileName(LocationPath);
 
-    public Stream OpenReadStream() => File.OpenRead(Path);
-    public Stream OpenWriteStream() => File.Open(Path, FileMode.Create, FileAccess.Write);
+    public Stream OpenReadStream() => File.OpenRead(LocationPath);
+    public Stream OpenWriteStream() => File.Open(LocationPath, FileMode.Create, FileAccess.Write);
 }

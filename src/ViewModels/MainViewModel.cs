@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,9 +21,9 @@ namespace S4UDashboard.ViewModels;
 public class MainViewModel : ViewModelBase
 {
     public ReactiveCell<int> SelectedTabIndex { get; } = new(-1);
-    public ComputedCell<FileTabViewModel?> SelectedTab { get; }
+    public ReactiveCell<FileTabViewModel?> SelectedTab { get; } = new(null);
 
-    public ReactiveList<FileTabViewModel> TabList { get; } = [];
+    public ObservableCollection<FileTabViewModel> TabList { get; } = [];
 
     public ReactiveCommand QuitApp { get; } = new(
         () => ServiceProvider.GetService<MainWindow>() is not null,
@@ -44,8 +45,6 @@ public class MainViewModel : ViewModelBase
         var window = ServiceProvider.GetService<MainWindow>();
         if (window != null) window.Closing += HandleClosing;
 
-        SelectedTab = new(() => TabList.ElementAtOrDefault(SelectedTabIndex.Value));
-
         bool AnyTabOpen() => SelectedTab.Value is not null;
 
         GoNextTab = new(AnyTabOpen, _ => SelectTab(SelectedTabIndex.Value + 1));
@@ -60,7 +59,12 @@ public class MainViewModel : ViewModelBase
         SaveCurrent = new(AnyTabOpen, async _ => await SelectedTab.Value!.SaveCurrent());
         SaveAsDialog = new(AnyTabOpen, async _ => await SelectedTab.Value!.SaveAs());
 
-        SaveAll = new(() => TabList.Where(f => f.Dirty.Value).Any(), async _ =>
+        EffectManager.ShimPropertyChanged(TabList);
+        SaveAll = new(() =>
+        {
+            EffectManager.Track(TabList, "Item[]");
+            return TabList.Where(f => f.Dirty.Value).Any();
+        }, async _ =>
         {
             foreach (var tab in TabList.Where(f => f.Dirty.Value))
                 await tab.SaveCurrent();
@@ -88,11 +92,21 @@ public class MainViewModel : ViewModelBase
         var unique = locations.Except(fileLocations);
 
         if (locations.Count() == 1 && !unique.Any())
-            SelectTab(TabList.FindIndex(
-                vm => vm.Location.Value is FileLocation floc && floc == locations.Single()));
+        {
+            var idx = 0;
+            var loc = locations.Single();
+
+            foreach (var vm in TabList)
+            {
+                if (vm.Location.Value is FileLocation floc && floc == loc) break;
+                idx++;
+            }
+
+            SelectTab(idx);
+        }
         else if (unique.Any())
         {
-            TabList.AddRange(unique.Select(loc => FileTabViewModel.FromLocation(loc)));
+            foreach (var vm in unique.Select(loc => FileTabViewModel.FromLocation(loc))) TabList.Add(vm);
             SelectTab(TabList.Count);
         }
     }
@@ -111,7 +125,9 @@ public class MainViewModel : ViewModelBase
                 SampleTimes = [new(2025, 4, 1), new(2025, 4, 2), new(2025, 4, 3)],
                 Samples = new([26, 22, 28, 21, 23, 21, 29, 31, 32], 3, 3),
             });
+
         TabList.Add(FileTabViewModel.FromLocation(loc));
+        SelectTab(TabList.Count);
     }
 
     private async Task<bool> HandleClosingTab(FileTabViewModel tab)
