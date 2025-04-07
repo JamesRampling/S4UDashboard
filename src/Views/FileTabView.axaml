@@ -7,8 +7,7 @@
              xmlns:system="using:System"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="S4UDashboard.Views.FileTabView"
-             x:DataType="vm:FileTabViewModel"
-             Name="TabContainer">
+             x:DataType="vm:FileTabViewModel">
   <Design.DataContext><vm:FileTabViewModel/></Design.DataContext>
   <DockPanel>
     <Grid ColumnDefinitions="Auto,3*,Auto,2*,Auto,2*" RowDefinitions="Auto" DockPanel.Dock="Top" Margin="0 2 0 2">
@@ -110,9 +109,13 @@
           <Setter Property="Background">
             <MultiBinding Converter="{StaticResource ThresholdColourizerMultiConverter}">
               <Binding Path="$self.Value"/>
-              <Binding Path="((vm:FileTabViewModel)DataContext).LowerField.Value" ElementName="TabContainer"/>
-              <Binding Path="((vm:FileTabViewModel)DataContext).UpperField.Value" ElementName="TabContainer"/>
-              <Binding Path="((vm:FileTabViewModel)DataContext).VisualiseCells.Value" ElementName="TabContainer" FallbackValue="{x:False}"/>
+              <Binding RelativeSource="{RelativeSource AncestorType=views:FileTabView}"
+                       Path="((vm:FileTabViewModel)DataContext).LowerField.Value"/>
+              <Binding RelativeSource="{RelativeSource AncestorType=views:FileTabView}"
+                       Path="((vm:FileTabViewModel)DataContext).UpperField.Value"/>
+              <Binding RelativeSource="{RelativeSource AncestorType=views:FileTabView}"
+                       Path="((vm:FileTabViewModel)DataContext).VisualiseCells.Value"
+                       FallbackValue="{x:False}"/>
             </MultiBinding>
           </Setter>
         </Style>

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
+using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
@@ -16,8 +17,8 @@ public class ThresholdColourizerMultiConverter : IMultiValueConverter
             throw new NotSupportedException();
 
         if (values[0] is not string cell ||
-            (values[1] is not double && values[1] is not null) ||
-            (values[2] is not double && values[2] is not null) ||
+            (values[1] is not double && values[1] is not UnsetValueType && values[1] is not null) ||
+            (values[2] is not double && values[2] is not UnsetValueType && values[2] is not null) ||
             values[3] is not bool vf)
             throw new NotSupportedException();
 
