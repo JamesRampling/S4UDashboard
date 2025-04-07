@@ -10,67 +10,88 @@
              x:Class="S4UDashboard.Views.MainView"
              x:DataType="vm:MainViewModel">
   <Design.DataContext><vm:MainViewModel/></Design.DataContext>
-  <StackPanel>
-    <controls:HKMenu>
-      <MenuItem Header="_File">
-        <MenuItem Header="_Open..." InputGesture="Ctrl+O" Command="{Binding OpenFileDialog}"/>
-        <MenuItem Header="Generate Sample Data" InputGesture="Ctrl+N" Command="{Binding GenerateSample}"/>
-        <Separator/>
-        <MenuItem Header="_Save" InputGesture="Ctrl+S" Command="{Binding SaveCurrent}"/>
-        <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsDialog}"/>
-        <MenuItem Header="Save A_ll" Command="{Binding SaveAll}"/>
-        <Separator/>
-        <MenuItem Header="_Export..." InputGesture="Ctrl+E"/>
-        <MenuItem Header="E_xport As..." InputGesture="Ctrl+Shift+E"/>
-        <MenuItem Header="_Import..."/>
-        <Separator/>
-        <MenuItem Header="Se_ttings" InputGesture="Ctrl+,"/>
-        <Separator/>
-        <MenuItem Header="_Quit" InputGesture="Ctrl+Q" Command="{Binding QuitApp}"/>
-      </MenuItem>
-      <MenuItem Header="_View">
-        <MenuItem Header="So_rt..."/>
-        <MenuItem Header="_Search..." InputGesture="Ctrl+F"/>
-        <Separator/>
-        <MenuItem Header="Next Dataset" InputGesture="Ctrl+OEMCloseBrackets" Command="{Binding GoNextTab}"/>
-        <MenuItem Header="Previous Dataset" InputGesture="Ctrl+OEMOpenBrackets" Command="{Binding GoPrevTab}"/>
-        <Separator/>
-        <MenuItem Header="Close Dataset" InputGesture="Ctrl+W" Command="{Binding CloseSelectedTab}"/>
-      </MenuItem>
-      <MenuItem Header="_Help">
-        <MenuItem Header="_User Manual"/>
-        <MenuItem Header="_Documentation"/>
-        <Separator/>
-        <MenuItem Header="_About"/>
-      </MenuItem>
-    </controls:HKMenu>
+  <DockPanel>
+    <Border BorderThickness="0 0 0 1"
+            BorderBrush="{DynamicResource TextControlBorderBrushDisabled}"
+            DockPanel.Dock="Top">
+      <controls:HKMenu>
+        <MenuItem Header="_File">
+          <MenuItem Header="_Open..." InputGesture="Ctrl+O" Command="{Binding OpenFileDialog}"/>
+          <MenuItem Header="Generate Sample Data" InputGesture="Ctrl+N" Command="{Binding GenerateSample}"/>
+          <Separator/>
+          <MenuItem Header="_Save" InputGesture="Ctrl+S" Command="{Binding SaveCurrent}"/>
+          <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsDialog}"/>
+          <MenuItem Header="Save A_ll" Command="{Binding SaveAll}"/>
+          <Separator/>
+          <MenuItem Header="_Export..." InputGesture="Ctrl+E"/>
+          <MenuItem Header="E_xport As..." InputGesture="Ctrl+Shift+E"/>
+          <MenuItem Header="_Import..."/>
+          <Separator/>
+          <MenuItem Header="Se_ttings" InputGesture="Ctrl+,"/>
+          <Separator/>
+          <MenuItem Header="_Quit" InputGesture="Ctrl+Q" Command="{Binding QuitApp}"/>
+        </MenuItem>
+        <MenuItem Header="_View">
+          <MenuItem Header="So_rt..."/>
+          <MenuItem Header="_Search..." InputGesture="Ctrl+F"/>
+          <Separator/>
+          <MenuItem Header="Next Dataset" InputGesture="Ctrl+OEMCloseBrackets" Command="{Binding GoNextTab}"/>
+          <MenuItem Header="Previous Dataset" InputGesture="Ctrl+OEMOpenBrackets" Command="{Binding GoPrevTab}"/>
+          <Separator/>
+          <MenuItem Header="Close Dataset" InputGesture="Ctrl+W" Command="{Binding CloseSelectedTab}"/>
+        </MenuItem>
+        <MenuItem Header="_Help">
+          <MenuItem Header="_User Manual"/>
+          <MenuItem Header="_Documentation"/>
+          <Separator/>
+          <MenuItem Header="_About"/>
+        </MenuItem>
+      </controls:HKMenu>
+    </Border>
 
-    <tabalonia:TabsControl IsVisible="{Binding !!TabList.Count}"
-                           ItemsSource="{Binding TabList}"
-                           SelectedIndex="{Binding SelectedTabIndex.Value}"
-                           SelectedItem="{Binding SelectedTab.Value}"
-                           ShowDefaultAddButton="{x:False}"
-                           CloseItemCommand="{Binding CloseTabCommand}"
-                           LeftThumbWidth="0"
-                           RightThumbWidth="0"
-                           LastTabClosedAction="{x:Null}">
-      <tabalonia:TabsControl.Styles>
-        <Style Selector="TextBlock.Italic">
-          <Setter Property="FontStyle" Value="Italic"/>
-        </Style>
-      </tabalonia:TabsControl.Styles>
+    <Panel Background="{DynamicResource TabControlWindowActiveBackgroundBrush}">
+      <tabalonia:TabsControl IsVisible="{Binding !!TabList.Count}"
+                             ItemsSource="{Binding TabList}"
+                             SelectedIndex="{Binding SelectedTabIndex.Value}"
+                             SelectedItem="{Binding SelectedTab.Value}"
+                             ShowDefaultAddButton="{x:False}"
+                             CloseItemCommand="{Binding CloseTabCommand}"
+                             LeftThumbWidth="0"
+                             RightThumbWidth="0"
+                             Background="Transparent"
+                             LastTabClosedAction="{x:Null}">
+        <tabalonia:TabsControl.Styles>
+          <Style Selector="TextBlock.Italic">
+            <Setter Property="FontStyle" Value="Italic"/>
+          </Style>
+        </tabalonia:TabsControl.Styles>
 
-      <TabControl.ContentTemplate>
-        <DataTemplate DataType="vm:FileTabViewModel">
-          <views:FileTabView/>
-        </DataTemplate>
-      </TabControl.ContentTemplate>
-      <TabControl.ItemTemplate>
-        <DataTemplate DataType="vm:FileTabViewModel">
-          <TextBlock Text="{Binding Header.Value}" Classes.Italic="{Binding Dirty.Value}"/>
-        </DataTemplate>
-      </TabControl.ItemTemplate>
-    </tabalonia:TabsControl>
-    <TextBlock IsVisible="{Binding !TabList.Count}" Text="no tabs open"/>
-  </StackPanel>
+        <TabControl.ContentTemplate>
+          <DataTemplate DataType="vm:FileTabViewModel">
+            <views:FileTabView/>
+          </DataTemplate>
+        </TabControl.ContentTemplate>
+        <TabControl.ItemTemplate>
+          <DataTemplate DataType="vm:FileTabViewModel">
+            <TextBlock Text="{Binding Header.Value}" Classes.Italic="{Binding Dirty.Value}"/>
+          </DataTemplate>
+        </TabControl.ItemTemplate>
+      </tabalonia:TabsControl>
+
+      <StackPanel IsVisible="{Binding !TabList.Count}"
+                  Orientation="Vertical"
+                  VerticalAlignment="Center"
+                  HorizontalAlignment="Center">
+        <StackPanel.Styles>
+          <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextControlForegroundDisabled}"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+          </Style>
+        </StackPanel.Styles>
+
+        <TextBlock FontSize="48" Text="Sensing4U Dashboard"/>
+        <TextBlock FontSize="18" Text="Version 1.0.0"/>
+      </StackPanel>
+    </Panel>
+  </DockPanel>
 </UserControl>

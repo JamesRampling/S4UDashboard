@@ -1,7 +1,10 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
+using Avalonia.Controls;
+using Avalonia.Controls.Models.TreeDataGrid;
 using Avalonia.Platform.Storage;
 
 using S4UDashboard.Model;
@@ -22,6 +25,7 @@ public class FileTabViewModel : ViewModelBase
     public ReactiveCell<bool> VisualiseCells { get; } = new(false);
 
     public ComputedCell<string> Header { get; }
+    public FlatTreeDataGridSource<IEnumerable<double>> GridSource { get; }
 
     public ReactiveCommand UpdateAnnotatedName { get; }
     public ReactiveCommand ClearAnnotatedName { get; }
@@ -36,6 +40,10 @@ public class FileTabViewModel : ViewModelBase
         UpperField = new(dataset.Value.AnnotatedData.UpperThreshold);
 
         Header = new(() => Dataset.Value.AnnotatedData.AnnotatedName ?? Location.Value.LocationHint);
+        GridSource = new(Dataset.Value.SensorData.Samples);
+        GridSource.Columns.AddRange(
+            Dataset.Value.SensorData.SensorNames.Select((s, i) => new TextColumn<IEnumerable<double>, double>(s, row => row.ElementAt(i)))
+        );
 
         UpdateAnnotatedName = new(
             () => NameField.Value.Trim() != Dataset.Value.AnnotatedData.AnnotatedName

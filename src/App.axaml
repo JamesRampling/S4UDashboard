@@ -10,6 +10,8 @@
                 <ColorPaletteResources x:Key="Dark" Accent="#ff0078d4" AltHigh="Black" AltLow="Black" AltMedium="Black" AltMediumHigh="Black" AltMediumLow="Black" BaseHigh="White" BaseLow="#ff2b2b2b" BaseMedium="#ff969696" BaseMediumHigh="#ffb1b1b1" BaseMediumLow="#ff616161" ChromeAltLow="#ffb1b1b1" ChromeBlackHigh="Black" ChromeBlackLow="#ffb1b1b1" ChromeBlackMedium="Black" ChromeBlackMediumLow="Black" ChromeDisabledHigh="#ff2b2b2b" ChromeDisabledLow="#ff969696" ChromeGray="#ff7b7b7b" ChromeHigh="#ff7b7b7b" ChromeLow="#ff121212" ChromeMedium="#ff181818" ChromeMediumLow="#ff252525" ChromeWhite="White" ListLow="#ff181818" ListMedium="#ff2b2b2b" RegionColor="#ff181818" />
             </FluentTheme.Palettes>
         </FluentTheme>
+
+        <StyleInclude Source="avares://Avalonia.Controls.TreeDataGrid/Themes/Fluent.axaml"/>
         <tabalonia:CustomTheme/>
     </Application.Styles>
     <Application.Resources>

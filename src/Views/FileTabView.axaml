@@ -10,7 +10,7 @@
              x:DataType="vm:FileTabViewModel">
   <Design.DataContext><vm:FileTabViewModel/></Design.DataContext>
   <DockPanel>
-    <Grid ColumnDefinitions="Auto,3*,Auto,2*,Auto,2*" RowDefinitions="Auto" DockPanel.Dock="Top">
+    <Grid ColumnDefinitions="Auto,3*,Auto,2*,Auto,2*" RowDefinitions="Auto" DockPanel.Dock="Top" Margin="0 2 0 2">
       <Grid.Styles>
         <Style Selector="Label">
           <Setter Property="HorizontalAlignment" Value="Right"/>
@@ -99,6 +99,12 @@
                 Grid.Column="8"/>
     </Grid>
 
-    <DataGrid/>
+    <Border BorderBrush="{DynamicResource TreeDataGridGridLinesBrush}"
+            BorderThickness="2"
+            CornerRadius="6"
+            Margin="8 8 8 8">
+      <TreeDataGrid Source="{Binding GridSource}"
+                    CanUserSortColumns="False"/>
+    </Border>
   </DockPanel>
 </UserControl>
