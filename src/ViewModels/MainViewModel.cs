@@ -28,6 +28,9 @@ public class MainViewModel : ViewModelBase
 
     public ObservableCollection<FileTabViewModel> TabList { get; } = [];
 
+    public ReactiveCell<SortMode> TabsSortMode { get; } = new(SortMode.Unsorted);
+    public ComputedCell<bool> TabsAreSorted { get; }
+
     public ReactiveCommand QuitApp { get; } = new(
         () => ServiceProvider.GetService<MainWindow>() is not null,
         _ => ServiceProvider.ExpectService<MainWindow>().Close());
@@ -47,6 +50,8 @@ public class MainViewModel : ViewModelBase
     {
         var window = ServiceProvider.GetService<MainWindow>();
         if (window != null) window.Closing += HandleClosing;
+
+        TabsAreSorted = new(() => TabsSortMode.Value != SortMode.Unsorted);
 
         bool AnyTabOpen() => SelectedTab.Value is not null;
 

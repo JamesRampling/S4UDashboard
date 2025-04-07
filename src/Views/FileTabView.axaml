@@ -59,7 +59,9 @@
                      Grid.Column="5"/>
     </Grid>
 
-    <Grid ColumnDefinitions="Auto,3*,Auto,3*,Auto,3*,Auto,4*,Auto" RowDefinitions="Auto" DockPanel.Dock="Bottom">
+    <Grid ColumnDefinitions="Auto,3*,Auto,3*,Auto,3*,Auto,4*,Auto"
+          RowDefinitions="Auto"
+          DockPanel.Dock="Bottom">
       <Grid.Styles>
         <Style Selector="TextBlock">
           <Setter Property="VerticalAlignment" Value="Center"/>

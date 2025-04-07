@@ -6,6 +6,7 @@
              xmlns:controls="using:S4UDashboard.Controls"
              xmlns:vm="using:S4UDashboard.ViewModels"
              xmlns:views="using:S4UDashboard.Views"
+             xmlns:model="using:S4UDashboard.Model"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="S4UDashboard.Views.MainView"
              x:DataType="vm:MainViewModel">
@@ -14,39 +15,58 @@
     <Border BorderThickness="0 0 0 1"
             BorderBrush="{DynamicResource TextControlBorderBrushDisabled}"
             DockPanel.Dock="Top">
-      <controls:HKMenu>
-        <MenuItem Header="_File">
-          <MenuItem Header="_Open..." InputGesture="Ctrl+O" Command="{Binding OpenFileDialog}"/>
-          <MenuItem Header="Generate Sample Data" InputGesture="Ctrl+N" Command="{Binding GenerateSample}"/>
-          <Separator/>
-          <MenuItem Header="_Save" InputGesture="Ctrl+S" Command="{Binding SaveCurrent}"/>
-          <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsDialog}"/>
-          <MenuItem Header="Save A_ll" Command="{Binding SaveAll}"/>
-          <Separator/>
-          <MenuItem Header="_Export..." InputGesture="Ctrl+E"/>
-          <MenuItem Header="E_xport As..." InputGesture="Ctrl+Shift+E"/>
-          <MenuItem Header="_Import..."/>
-          <Separator/>
-          <MenuItem Header="Se_ttings" InputGesture="Ctrl+,"/>
-          <Separator/>
-          <MenuItem Header="_Quit" InputGesture="Ctrl+Q" Command="{Binding QuitApp}"/>
-        </MenuItem>
-        <MenuItem Header="_View">
-          <MenuItem Header="So_rt..."/>
-          <MenuItem Header="_Search..." InputGesture="Ctrl+F"/>
-          <Separator/>
-          <MenuItem Header="Next Dataset" InputGesture="Ctrl+OEMCloseBrackets" Command="{Binding GoNextTab}"/>
-          <MenuItem Header="Previous Dataset" InputGesture="Ctrl+OEMOpenBrackets" Command="{Binding GoPrevTab}"/>
-          <Separator/>
-          <MenuItem Header="Close Dataset" InputGesture="Ctrl+W" Command="{Binding CloseSelectedTab}"/>
-        </MenuItem>
-        <MenuItem Header="_Help">
-          <MenuItem Header="_User Manual"/>
-          <MenuItem Header="_Documentation"/>
-          <Separator/>
-          <MenuItem Header="_About"/>
-        </MenuItem>
-      </controls:HKMenu>
+      <DockPanel>
+        <controls:HKMenu DockPanel.Dock="Left">
+          <MenuItem Header="_File">
+            <MenuItem Header="_Open..." InputGesture="Ctrl+O" Command="{Binding OpenFileDialog}"/>
+            <MenuItem Header="Generate Sample Data" InputGesture="Ctrl+N" Command="{Binding GenerateSample}"/>
+            <Separator/>
+            <MenuItem Header="_Save" InputGesture="Ctrl+S" Command="{Binding SaveCurrent}"/>
+            <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsDialog}"/>
+            <MenuItem Header="Save A_ll" Command="{Binding SaveAll}"/>
+            <Separator/>
+            <MenuItem Header="_Export..." InputGesture="Ctrl+E"/>
+            <MenuItem Header="E_xport As..." InputGesture="Ctrl+Shift+E"/>
+            <MenuItem Header="_Import..."/>
+            <Separator/>
+            <MenuItem Header="Se_ttings" InputGesture="Ctrl+,"/>
+            <Separator/>
+            <MenuItem Header="_Quit" InputGesture="Ctrl+Q" Command="{Binding QuitApp}"/>
+          </MenuItem>
+          <MenuItem Header="_View">
+            <MenuItem Header="Next Dataset" InputGesture="Ctrl+OEMCloseBrackets" Command="{Binding GoNextTab}"/>
+            <MenuItem Header="Previous Dataset" InputGesture="Ctrl+OEMOpenBrackets" Command="{Binding GoPrevTab}"/>
+            <Separator/>
+            <MenuItem Header="Close Dataset" InputGesture="Ctrl+W" Command="{Binding CloseSelectedTab}"/>
+          </MenuItem>
+          <MenuItem Header="_Help">
+            <MenuItem Header="_User Manual"/>
+            <MenuItem Header="_Documentation"/>
+            <Separator/>
+            <MenuItem Header="_About"/>
+          </MenuItem>
+        </controls:HKMenu>
+
+        <StackPanel Orientation="Horizontal" Margin="4 0 4 0" VerticalAlignment="Center" DockPanel.Dock="Right">
+          <Label Content="Sort By" Target="sortbox"/>
+          <ComboBox x:Name="sortbox"
+                    MinWidth="140"
+                    ItemsSource="{controls:EnumBinding {x:Type model:SortMode}}"
+                    SelectedItem="{Binding TabsSortMode.Value}"/>
+        </StackPanel>
+
+        <Grid ColumnDefinitions="*,4*,*" RowDefinitions="Auto" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+          <Grid.Styles>
+            <Style Selector="TextBox.Center">
+              <Setter Property="TextAlignment" Value="Center"/>
+            </Style>
+          </Grid.Styles>
+          <TextBox Watermark="Search..."
+                   IsEnabled="{Binding TabsAreSorted.Value}"
+                   Classes.Center="{Binding !$self.IsFocused}"
+                   Grid.Column="1"/>
+        </Grid>
+      </DockPanel>
     </Border>
 
     <Panel Background="{DynamicResource TabControlWindowActiveBackgroundBrush}">
