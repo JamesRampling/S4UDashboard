@@ -35,8 +35,11 @@ public class MainViewModel : ViewModelBase
         () => ServiceProvider.GetService<MainWindow>() is not null,
         _ => ServiceProvider.ExpectService<MainWindow>().Close());
 
-    public async Task<bool> CloseTabCommand(object o) =>
-        o is DragTabItem item && item.Header is FileTabViewModel tab && await HandleClosingTab(tab);
+    public void CloseTabCommand(object o)
+    {
+        if (o is not DragTabItem item || item.Header is not FileTabViewModel tab) return;
+        CloseTab(tab);
+    }
 
     public ReactiveCommand GoNextTab { get; }
     public ReactiveCommand GoPrevTab { get; }
@@ -57,12 +60,7 @@ public class MainViewModel : ViewModelBase
 
         GoNextTab = new(AnyTabOpen, _ => SelectTab(SelectedTabIndex.Value + 1));
         GoPrevTab = new(AnyTabOpen, _ => SelectTab(SelectedTabIndex.Value - 1));
-        CloseSelectedTab = new(AnyTabOpen, async _ =>
-        {
-            var initial = SelectedTabIndex.Value;
-            if (await HandleClosingTab(SelectedTab.Value!) && TabList.Count > 0)
-                SelectTab(initial);
-        });
+        CloseSelectedTab = new(AnyTabOpen, _ => CloseTab(SelectedTab.Value!));
 
         SaveCurrent = new(AnyTabOpen, async _ => await SelectedTab.Value!.SaveCurrent());
         SaveAsDialog = new(AnyTabOpen, async _ => await SelectedTab.Value!.SaveAs());
@@ -80,6 +78,14 @@ public class MainViewModel : ViewModelBase
     }
 
     private void SelectTab(int index) => SelectedTabIndex.Value = Math.Clamp(index, 0, TabList.Count - 1);
+    private async void CloseTab(FileTabViewModel tab)
+    {
+        var initial = SelectedTabIndex.Value;
+        var closed = await HandleClosingTab(tab);
+        if (TabList.Count > 0 && closed >= 0)
+            SelectTab(initial - (closed < initial ? 1 : 0));
+    }
+
     public async void OpenFileDialog()
     {
         var storage = ServiceProvider.ExpectService<IStorageProvider>();
@@ -134,9 +140,9 @@ public class MainViewModel : ViewModelBase
         SelectTab(TabList.Count);
     }
 
-    private async Task<bool> HandleClosingTab(FileTabViewModel tab)
+    private async Task<int> HandleClosingTab(FileTabViewModel tab)
     {
-        if (!await TryCloseTab(tab)) return false;
+        if (!await TryCloseTab(tab)) return -1;
 
         var idx = TabList.IndexOf(tab);
         var front = idx != -1;
@@ -145,7 +151,7 @@ public class MainViewModel : ViewModelBase
         var back = DataProcessing.Instance.Datasets.Remove(tab.Location.Value);
 
         Trace.Assert(front == back, "frontend & backend state differed");
-        return front;
+        return front ? idx : -1;
     }
 
     private async Task<bool> TryCloseTab(FileTabViewModel tab)
