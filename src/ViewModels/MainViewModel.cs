@@ -114,20 +114,16 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    private static int _sampleCount = 1;
     public void GenerateSample()
     {
         var loc = DataProcessing.Instance.AddSampleDataset(
             new AnnotatedDataModel
             {
-                AnnotatedName = "Foo",
+                AnnotatedName = $"Sample #{_sampleCount++}",
             },
-            new SensorDataModel
-            {
-                MeasurementIdentifier = "temperature",
-                SensorNames = ["bedroom", "office", "kitchen"],
-                SampleTimes = [new(2025, 4, 1), new(2025, 4, 2), new(2025, 4, 3)],
-                Samples = new([26, 22, 28, 21, 23, 21, 29, 31, 32], 3, 3),
-            });
+            SampleGenerator.GenerateSensorData(SampleGenerator.DefaultProfile, 10, 60)
+        );
 
         TabList.Add(FileTabViewModel.FromLocation(loc));
         SelectTab(TabList.Count);

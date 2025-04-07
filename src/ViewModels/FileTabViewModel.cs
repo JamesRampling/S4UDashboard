@@ -41,9 +41,9 @@ public class FileTabViewModel : ViewModelBase
 
         Header = new(() => Dataset.Value.AnnotatedData.AnnotatedName ?? Location.Value.LocationHint);
         GridSource = new(Dataset.Value.SensorData.Samples);
-        GridSource.Columns.AddRange(
-            Dataset.Value.SensorData.SensorNames.Select((s, i) => new TextColumn<IEnumerable<double>, double>(s, row => row.ElementAt(i)))
-        );
+        GridSource.Columns.AddRange(Dataset.Value.SensorData.SensorNames.Select(
+            (s, i) => new TextColumn<IEnumerable<double>, double>(s, row => row.ElementAt(i))
+        ));
 
         UpdateAnnotatedName = new(
             () => NameField.Value.Trim() != Dataset.Value.AnnotatedData.AnnotatedName

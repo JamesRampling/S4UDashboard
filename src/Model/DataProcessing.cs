@@ -105,10 +105,9 @@ public class DataProcessing
             sum += sample;
         }
 
-        int len = sensorData.SensorNames.Length * sensorData.SampleTimes.Length;
         return new CalculatedDataModel
         {
-            Mean = sum / len,
+            Mean = sum / sensorData.Samples.Length,
             Minimum = min,
             Maximum = max,
         };

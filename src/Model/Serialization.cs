@@ -11,14 +11,12 @@ public static class Serializers
     /* This is "S4UD" in ASCII (little endian) */
     public readonly static int MagicSignature = 0x44_55_34_53;
     /* The current version of the serialisation format */
-    public readonly static int LatestFormatVersion = -1;
+    public readonly static int LatestFormatVersion = -2;
 
     private readonly static Func<BinaryReader, string> ReadString = (r) => r.ReadString();
     private readonly static Action<BinaryWriter, string> WriteString = (w, i) => w.Write(i);
     private readonly static Func<BinaryReader, double> ReadDouble = (r) => r.ReadDouble();
     private readonly static Action<BinaryWriter, double> WriteDouble = (w, i) => w.Write(i);
-    private readonly static Func<BinaryReader, DateTime> ReadDateTime = (r) => DateTime.FromBinary(r.ReadInt64());
-    private readonly static Action<BinaryWriter, DateTime> WriteDateTime = (w, i) => w.Write(i.ToBinary());
 
     public readonly static Func<BinaryReader, AnnotatedDataModel> AnnotatedDataDeserializer = (r) => new AnnotatedDataModel
     {
@@ -38,15 +36,14 @@ public static class Serializers
     {
         var measurementIdentifier = r.ReadString();
         var sensorNames = r.ReadEnumerable(ReadString).ToImmutableArray();
-        var sampleTimes = r.ReadEnumerable(ReadDateTime).ToImmutableArray();
-        var samples = r.ReadRawEnumerable(ReadDouble, sensorNames.Length * sampleTimes.Length);
+        var nSamples = r.ReadInt32();
+        var samples = r.ReadRawEnumerable(ReadDouble, sensorNames.Length * nSamples);
 
         return new SensorDataModel
         {
             MeasurementIdentifier = measurementIdentifier,
             SensorNames = sensorNames,
-            SampleTimes = sampleTimes,
-            Samples = new(samples, sensorNames.Length, sampleTimes.Length),
+            Samples = new(samples, nSamples, sensorNames.Length),
         };
     };
 
@@ -54,7 +51,7 @@ public static class Serializers
     {
         w.Write(i.MeasurementIdentifier);
         w.WriteEnumerable(WriteString, i.SensorNames);
-        w.WriteEnumerable(WriteDateTime, i.SampleTimes);
+        w.Write(i.Samples.Rows);
         w.WriteRawEnumerable(WriteDouble, i.Samples.EnumerateFlat());
     };
 

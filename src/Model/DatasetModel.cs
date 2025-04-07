@@ -44,7 +44,5 @@ public readonly record struct SensorDataModel
     public required string MeasurementIdentifier { get; init; }
 
     public required ImmutableArray<string> SensorNames { get; init; }
-    public required ImmutableArray<DateTime> SampleTimes { get; init; }
-
     public required Immutable2DArray<double> Samples { get; init; }
 }
