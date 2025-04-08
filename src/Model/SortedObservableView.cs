@@ -22,12 +22,14 @@ public partial class SortedObservableView<T> : INotifyPropertyChanged, INotifyCo
     {
         get
         {
-            if (_order != null || Selector == null) return null;
-            _order = _source
+            if (Selector == null) return null;
+
+            _order ??= _source
                 .Select((v, i) => (i, v))
                 .OrderBy(t => Selector(t.v))
                 .Select(t => t.i)
                 .ToImmutableList();
+
             return _order;
         }
     }

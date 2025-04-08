@@ -130,7 +130,7 @@ public class MainViewModel : ViewModelBase
         else if (unique.Any())
         {
             foreach (var vm in unique.Select(loc => FileTabViewModel.FromLocation(loc))) TabList.Add(vm);
-            SelectTab(TabList.Count);
+            if (TabsSortMode.Value == SortMode.Unsorted) SelectTab(TabList.Count);
         }
     }
 
@@ -145,8 +145,10 @@ public class MainViewModel : ViewModelBase
             SampleGenerator.GenerateSensorData(SampleGenerator.DefaultProfile, 10, 100)
         );
 
-        TabList.Add(FileTabViewModel.FromLocation(loc));
-        SelectTab(TabList.Count);
+        var vm = FileTabViewModel.FromLocation(loc);
+        TabList.Add(vm);
+        var idx = TabsSortMode.Value == SortMode.Unsorted ? TabList.Count : TabList.IndexOf(vm);
+        SelectTab(idx);
     }
 
     private async Task<int> HandleClosingTab(FileTabViewModel tab)
