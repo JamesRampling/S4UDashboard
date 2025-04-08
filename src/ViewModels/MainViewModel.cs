@@ -26,7 +26,7 @@ public class MainViewModel : ViewModelBase
     public ReactiveCell<int> SelectedTabIndex { get; } = new(-1);
     public ReactiveCell<FileTabViewModel?> SelectedTab { get; } = new(null);
 
-    public ObservableCollection<FileTabViewModel> TabList { get; } = [];
+    public SortedObservableView<FileTabViewModel> TabList { get; } = new([]);
 
     public ReactiveCell<SortMode> TabsSortMode { get; } = new(SortMode.Unsorted);
     public ComputedCell<bool> TabsAreSorted { get; }
@@ -55,6 +55,15 @@ public class MainViewModel : ViewModelBase
         if (window != null) window.Closing += HandleClosing;
 
         TabsAreSorted = new(() => TabsSortMode.Value != SortMode.Unsorted);
+        EffectManager.Watch(() => TabsSortMode.Value, mode =>
+        {
+            if (mode == SortMode.Unsorted) TabList.Impose();
+            else
+            {
+                var sf = DataProcessing.GetSortFunc(mode);
+                TabList.Selector = (vm) => sf(vm.Dataset.Value);
+            }
+        });
 
         bool AnyTabOpen() => SelectedTab.Value is not null;
 
@@ -133,7 +142,7 @@ public class MainViewModel : ViewModelBase
             {
                 AnnotatedName = $"Sample #{_sampleCount++}",
             },
-            SampleGenerator.GenerateSensorData(SampleGenerator.DefaultProfile, 10, 60)
+            SampleGenerator.GenerateSensorData(SampleGenerator.DefaultProfile, 10, 100)
         );
 
         TabList.Add(FileTabViewModel.FromLocation(loc));

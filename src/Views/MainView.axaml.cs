@@ -11,6 +11,6 @@ public partial class MainView : UserControl
     public MainView()
     {
         InitializeComponent();
-        AddHandler(DragTabItem.DragStarted, (o, e) => sortbox.SelectedItem = SortMode.Unsorted, handledEventsToo: true);
+        AddHandler(DragTabItem.DragDelta, (o, e) => sortbox.SelectedItem = SortMode.Unsorted, handledEventsToo: true);
     }
 }

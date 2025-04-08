@@ -24,11 +24,11 @@ public class DataProcessing
     private DataProcessing() { }
     public readonly static DataProcessing Instance = new();
 
-    public static Func<DatasetModel, IComparable?> GetSortFunc(SortMode mode) => mode switch
+    public static Func<DatasetModel, IComparable> GetSortFunc(SortMode mode) => mode switch
     {
         SortMode.Unsorted => throw new ArgumentException("attempted to get sort func of unsorted"),
 
-        SortMode.Name => d => d.AnnotatedData.AnnotatedName,
+        SortMode.Name => d => d.AnnotatedData.AnnotatedName ?? "",
         SortMode.Measurement => d => d.SensorData.MeasurementIdentifier,
         SortMode.Mean => d => d.CalculatedData.Mean,
         SortMode.Minimum => d => d.CalculatedData.Minimum,
@@ -40,8 +40,8 @@ public class DataProcessing
     public Dictionary<ILocation, ReactiveCell<DatasetModel>> Datasets = [];
     public ReactiveCell<SortMode> Mode { get; } = new(SortMode.Unsorted);
 
-    public ImmutableList<DatasetModel> Sorted
-        => [.. Datasets.Values.Select(c => c.Value).OrderBy(GetSortFunc(Mode.Value))];
+    public ImmutableList<DatasetModel> Sorted =>
+        [.. Datasets.Values.Select(c => c.Value).OrderBy(GetSortFunc(Mode.Value) ?? throw new InvalidOperationException())];
 
     public ReactiveCell<DatasetModel> LoadDataset(ILocation target)
     {
