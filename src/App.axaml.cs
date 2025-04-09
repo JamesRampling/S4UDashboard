@@ -25,6 +25,7 @@ public partial class App : Application
             ServiceProvider.AddService(window);
             ServiceProvider.AddService(window as TopLevel);
             ServiceProvider.AddService(window.StorageProvider);
+            ServiceProvider.AddService(window.Launcher);
 
             window.DataContext = new MainViewModel();
             desktop.MainWindow = window;

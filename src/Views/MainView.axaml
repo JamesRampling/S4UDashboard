@@ -32,12 +32,6 @@
             <MenuItem Header="Save _As..." InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsDialog}"/>
             <MenuItem Header="Save A_ll" Command="{Binding SaveAll}"/>
             <Separator/>
-            <MenuItem Header="_Export..." InputGesture="Ctrl+E"/>
-            <MenuItem Header="E_xport As..." InputGesture="Ctrl+Shift+E"/>
-            <MenuItem Header="_Import..."/>
-            <Separator/>
-            <MenuItem Header="Se_ttings" InputGesture="Ctrl+,"/>
-            <Separator/>
             <MenuItem Header="_Quit" InputGesture="Ctrl+Q" Command="{Binding QuitApp}"/>
           </MenuItem>
           <MenuItem Header="_View">
@@ -47,10 +41,9 @@
             <MenuItem Header="Close Dataset" InputGesture="Ctrl+W" Command="{Binding CloseSelectedTab}"/>
           </MenuItem>
           <MenuItem Header="_Help">
-            <MenuItem Header="_User Manual"/>
-            <MenuItem Header="_Documentation"/>
+            <MenuItem Header="_User Manual" Command="{Binding OpenWiki}"/>
             <Separator/>
-            <MenuItem Header="_About"/>
+            <MenuItem Header="_About" Command="{Binding AboutAlert}"/>
           </MenuItem>
         </controls:HKMenu>
 

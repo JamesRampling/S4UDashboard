@@ -30,6 +30,14 @@ public class MainViewModel : ViewModelBase
 
     public ReactiveCell<string> SearchText { get; } = new("");
 
+    public ReactiveCommand OpenWiki { get; } = new(() => true, _ =>
+        ServiceProvider.ExpectService<ILauncher>()
+            .LaunchUriAsync(new("https://github.com/JamesRampling/S4UDashboard/wiki")));
+    public ReactiveCommand AboutAlert { get; } = new(() => true, _ =>
+        ServiceProvider.ExpectService<AlertService>().Alert(
+            "About",
+            "Sensing4U Dashboard",
+            "Version 1.0.0\nCreated by CITE Managed Systems for Sensing4U"));
     public ReactiveCommand QuitApp { get; } = new(
         () => ServiceProvider.GetService<MainWindow>() is not null,
         _ => ServiceProvider.ExpectService<MainWindow>().Close());
