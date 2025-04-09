@@ -2,19 +2,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 
 namespace S4UDashboard.Model;
 
-public partial class SortedObservableView<T> : INotifyPropertyChanged, INotifyCollectionChanged
+public partial class SortedObservableView<T>(List<T> source) : INotifyPropertyChanged, INotifyCollectionChanged
 {
     private static readonly NotifyCollectionChangedEventArgs ResetArgs =
         new(NotifyCollectionChangedAction.Reset);
-
-    private readonly ObservableCollection<T> _source;
     private ImmutableList<int>? _order;
     private Func<T, IComparable>? _selector;
 
@@ -24,7 +21,7 @@ public partial class SortedObservableView<T> : INotifyPropertyChanged, INotifyCo
         {
             if (Selector == null) return null;
 
-            _order ??= _source
+            _order ??= source
                 .Select((v, i) => (i, v))
                 .OrderBy(t => Selector(t.v))
                 .Select(t => t.i)
@@ -45,23 +42,18 @@ public partial class SortedObservableView<T> : INotifyPropertyChanged, INotifyCo
         }
     }
 
-    public SortedObservableView(ObservableCollection<T> source)
-    {
-        _source = source;
-    }
-
     public void Impose()
     {
         if (Selector == null) return;
-        var ordered = _source.OrderBy(t => Selector(t)).ToImmutableList();
+        var ordered = source.OrderBy(t => Selector(t)).ToImmutableList();
 
         _order = null;
         _selector = null;
-        foreach (var (i, v) in ordered.Select((v, i) => (i, v))) _source[i] = v;
+        foreach (var (i, v) in ordered.Select((v, i) => (i, v))) source[i] = v;
     }
 
-    public T this[int index] => _source[Order != null ? Order[index] : index];
-    public int Count => _source.Count;
+    public T this[int index] => source[Order != null ? Order[index] : index];
+    public int Count => source.Count;
 
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -76,7 +68,7 @@ partial class SortedObservableView<T> : IList<T>
         get => this[index];
         set
         {
-            _source[Order != null ? Order[index] : index] = value;
+            source[Order != null ? Order[index] : index] = value;
             _order = null;
 
             PropertyChanged?.Invoke(this, new("Item[]"));
@@ -86,7 +78,7 @@ partial class SortedObservableView<T> : IList<T>
 
     public void Add(T item)
     {
-        _source.Add(item);
+        source.Add(item);
         _order = null;
 
         PropertyChanged?.Invoke(this, new(nameof(Count)));
@@ -96,7 +88,7 @@ partial class SortedObservableView<T> : IList<T>
 
     public void Clear()
     {
-        _source.Clear();
+        source.Clear();
         _order = null;
 
         PropertyChanged?.Invoke(this, new(nameof(Count)));
@@ -104,25 +96,25 @@ partial class SortedObservableView<T> : IList<T>
         CollectionChanged?.Invoke(this, ResetArgs);
     }
 
-    public bool Contains(T item) => _source.Contains(item);
-    public void CopyTo(T[] array, int arrayIndex) => _source.CopyTo(array, arrayIndex);
+    public bool Contains(T item) => source.Contains(item);
+    public void CopyTo(T[] array, int arrayIndex) => source.CopyTo(array, arrayIndex);
 
     public IEnumerator<T> GetEnumerator()
     {
-        for (int i = 0; i < _source.Count; i++)
+        for (int i = 0; i < source.Count; i++)
             yield return this[i];
     }
 
     public int IndexOf(T item)
     {
-        for (int i = 0; i < _source.Count; i++)
+        for (int i = 0; i < source.Count; i++)
             if (EqualityComparer<T>.Default.Equals(this[i], item)) return i;
         return -1;
     }
 
     public void Insert(int index, T item)
     {
-        _source.Insert(index, item);
+        source.Insert(index, item);
         _order = null;
 
         PropertyChanged?.Invoke(this, new(nameof(Count)));
@@ -132,7 +124,7 @@ partial class SortedObservableView<T> : IList<T>
 
     public bool Remove(T item)
     {
-        if (!_source.Remove(item)) return false;
+        if (!source.Remove(item)) return false;
         _order = null;
 
         PropertyChanged?.Invoke(this, new(nameof(Count)));
@@ -143,7 +135,7 @@ partial class SortedObservableView<T> : IList<T>
 
     public void RemoveAt(int index)
     {
-        _source.RemoveAt(index);
+        source.RemoveAt(index);
         _order = null;
 
         PropertyChanged?.Invoke(this, new(nameof(Count)));
@@ -157,8 +149,8 @@ partial class SortedObservableView<T> : IList<T>
 partial class SortedObservableView<T> : IList
 {
     public bool IsFixedSize => false;
-    public bool IsSynchronized => ((IList)_source).IsSynchronized;
-    public object SyncRoot => ((IList)_source).SyncRoot;
+    public bool IsSynchronized => ((IList)source).IsSynchronized;
+    public object SyncRoot => ((IList)source).SyncRoot;
 
     object? IList.this[int index]
     {
@@ -168,7 +160,7 @@ partial class SortedObservableView<T> : IList
 
     public int Add(object? value)
     {
-        var idx = _source.Count;
+        var idx = source.Count;
         Add((T)value!);
 
         if (Order == null) return idx;
@@ -181,7 +173,7 @@ partial class SortedObservableView<T> : IList
     }
 
     public bool Contains(object? value) => Contains((T)value!);
-    public void CopyTo(Array array, int index) => ((IList)_source).CopyTo(array, index);
+    public void CopyTo(Array array, int index) => ((IList)source).CopyTo(array, index);
     public int IndexOf(object? value) => IndexOf((T)value!);
     public void Insert(int index, object? value) => Insert(index, (T)value!);
     public void Remove(object? value) => Remove((T)value!);
