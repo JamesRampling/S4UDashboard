@@ -50,17 +50,6 @@ public class DataProcessing
         return FindInSorted(sorted, needle);
     }
 
-    public ReactiveCell<DatasetModel> LoadDataset(ILocation target)
-    {
-        if (Datasets.TryGetValue(target, out var existing)) return existing;
-
-        using var reader = new BinaryReader(target.OpenReadStream());
-        var dataset = reader.Read(Serializers.DatasetDeserializer);
-
-        Datasets[target] = new(dataset);
-        return Datasets[target];
-    }
-
     public ILocation AddSampleDataset(AnnotatedDataModel annotatedData, SensorDataModel sensorData)
     {
         var calculated = CalculateAuxilliaryData(sensorData);
@@ -76,25 +65,70 @@ public class DataProcessing
         return location;
     }
 
-    public void SaveDataset(ILocation target) =>
-        SaveDataset(Datasets[target].Value, target.OpenWriteStream());
+    private static DatasetModel? ReadDataset(ILocation target)
+    {
+        try
+        {
+            using var reader = new BinaryReader(target.OpenReadStream());
+            return reader.Read(Serializers.DatasetDeserializer);
+        }
+        catch (Exception)
+        {
+            ServiceProvider.ExpectService<AlertService>().Alert(
+                "Failed to load",
+                $"There was an issue loading {target.LocationHint}",
+                "Please ensure the file is valid and readable.");
+            return null;
+        }
+    }
 
-    public void SaveDatasetAs(ILocation source, ILocation destination)
+    private static bool WriteDataset(DatasetModel model, ILocation target)
+    {
+        try
+        {
+            using var writer = new BinaryWriter(target.OpenWriteStream());
+            Serializers.DatasetSerializer(writer, model);
+            return true;
+        }
+        catch (Exception)
+        {
+            ServiceProvider.ExpectService<AlertService>().Alert(
+                "Failed to save",
+                $"There was an issue saving {target.LocationHint}",
+                "Please make sure the file location is writable.");
+            return false;
+        }
+    }
+
+    public ReactiveCell<DatasetModel>? LoadDataset(ILocation target)
+    {
+        if (Datasets.TryGetValue(target, out var existing)) return existing;
+
+        var ds = ReadDataset(target);
+        if (!ds.HasValue) return null;
+
+        Datasets[target] = new(ds.Value);
+        return Datasets[target];
+    }
+
+    public bool SaveDataset(ILocation target) => WriteDataset(Datasets[target].Value, target);
+    public bool SaveDatasetAs(ILocation source, ILocation destination)
     {
         if (Datasets.ContainsKey(destination))
-            throw new InvalidOperationException("destination is already open");
+        {
+            ServiceProvider.ExpectService<AlertService>().Alert(
+                "Cannot overwrite",
+                "There is already an open file at that location",
+                "Close the conflicting file before attempting to overwrite.");
+            return false;
+        }
 
         var dataset = Datasets[source];
-        SaveDataset(dataset.Value, destination.OpenWriteStream());
+        if (!WriteDataset(dataset.Value, destination)) return false;
 
         Datasets.Remove(source);
         Datasets[destination] = dataset;
-    }
-
-    private static void SaveDataset(DatasetModel model, Stream output)
-    {
-        using var writer = new BinaryWriter(output);
-        Serializers.DatasetSerializer(writer, model);
+        return true;
     }
 
     /// <summary>

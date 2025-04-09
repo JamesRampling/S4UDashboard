@@ -21,6 +21,7 @@ public partial class App : Application
         {
             var window = new MainWindow();
 
+            ServiceProvider.AddService(new AlertService());
             ServiceProvider.AddService(window);
             ServiceProvider.AddService(window as TopLevel);
             ServiceProvider.AddService(window.StorageProvider);

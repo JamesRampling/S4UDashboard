@@ -20,9 +20,6 @@ namespace S4UDashboard.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {
-    private bool _closingTab = false;
-    private bool _closingWindow = false;
-
     public ReactiveCell<int> SelectedTabIndex { get; } = new(-1);
     public ReactiveCell<FileTabViewModel?> SelectedTab { get; } = new(null);
 
@@ -99,7 +96,10 @@ public class MainViewModel : ViewModelBase
 
             if (idx == -1)
             {
-                // TODO: make an alert saying no result found
+                ServiceProvider.ExpectService<AlertService>().Alert(
+                    "Search",
+                    "No results found",
+                    "No open files matched that criteria.");
             }
             else SelectTab(idx);
         });
@@ -148,8 +148,10 @@ public class MainViewModel : ViewModelBase
         }
         else if (unique.Any())
         {
-            foreach (var vm in unique.Select(loc => FileTabViewModel.FromLocation(loc))) TabList.Add(vm);
-            if (TabsSortMode.Value == SortMode.Unsorted) SelectTab(TabList.Count);
+            foreach (var vm in unique.Select(loc => FileTabViewModel.FromLocation(loc)))
+                if (vm != null) TabList.Add(vm);
+            if (TabsSortMode.Value == SortMode.Unsorted && TabList.Count > 0)
+                SelectTab(TabList.Count);
         }
     }
 
@@ -165,6 +167,8 @@ public class MainViewModel : ViewModelBase
         );
 
         var vm = FileTabViewModel.FromLocation(loc);
+        if (vm == null) return;
+
         TabList.Add(vm);
         var idx = TabsSortMode.Value == SortMode.Unsorted ? TabList.Count : TabList.IndexOf(vm);
         SelectTab(idx);
@@ -184,36 +188,23 @@ public class MainViewModel : ViewModelBase
         return front ? idx : -1;
     }
 
-    private async Task<bool> TryCloseTab(FileTabViewModel tab)
+    private static async Task<bool> TryCloseTab(FileTabViewModel tab)
     {
-        if (_closingTab || _closingWindow) return false;
         if (!tab.Dirty.Value) return true;
-        _closingTab = true;
 
-        var box = MessageBoxManager.GetMessageBoxCustom(new MsBox.Avalonia.Dto.MessageBoxCustomParams
+        var result = await ServiceProvider.ExpectService<AlertService>().PopupWithCancel(
+            "Close?",
+            $"Do you want to save the changes you made to {tab.Header.Value}?",
+            "Your changes will be lost if you don't save them.",
+            ["Don't Save", "Save"]
+        ) switch
         {
-            ButtonDefinitions = [
-                new ButtonDefinition { Name = "Cancel", IsCancel = true, IsDefault = true },
-                new ButtonDefinition { Name = "Don't Save" },
-                new ButtonDefinition { Name = "Save" },
-            ],
-            ContentTitle = "Close?",
-            ContentHeader = $"Do you want to save the changes you made to {tab.Header.Value}?",
-            ContentMessage = "Your changes will be lost if you don't save them.",
-            SizeToContent = SizeToContent.WidthAndHeight,
-            CanResize = false,
-            Topmost = true,
-        });
-
-        var result = await box.ShowAsync() switch
-        {
-            "Cancel" => false,
+            "Cancel" or null => false,
             "Don't Save" => true,
             "Save" => await tab.SaveCurrent(),
             _ => throw new Exception("invalid message box result"),
         };
 
-        _closingTab = false;
         return result;
     }
 
@@ -235,32 +226,20 @@ public class MainViewModel : ViewModelBase
     // may not be true if the user cancelled the close in a dialog.
     private async Task<bool> TryExit()
     {
-        if (_closingWindow || _closingTab) return false;
         if (!TabList.Where(t => t.Dirty.Value).Any()) return true;
-        _closingWindow = true;
 
-        var box = MessageBoxManager.GetMessageBoxCustom(new MsBox.Avalonia.Dto.MessageBoxCustomParams
+        var result = await ServiceProvider.ExpectService<AlertService>().PopupWithCancel(
+            "Quit?",
+            "There are unsaved changes!",
+            "If you quit now these changes will be discarded.",
+            ["Discard Changes"]
+        ) switch
         {
-            ButtonDefinitions = [
-                new ButtonDefinition { Name = "Cancel", IsCancel = true, IsDefault = true },
-                new ButtonDefinition { Name = "Discard Changes" },
-            ],
-            ContentTitle = "Quit?",
-            ContentHeader = "There are unsaved changes!",
-            ContentMessage = "If you quit now these changes will be discarded.",
-            SizeToContent = SizeToContent.WidthAndHeight,
-            CanResize = false,
-            Topmost = true,
-        });
-
-        var result = await box.ShowAsync() switch
-        {
-            "Cancel" => false,
+            "Cancel" or null => false,
             "Discard Changes" => true,
             _ => throw new Exception("invalid message box result"),
         };
 
-        _closingWindow = false;
         return result;
     }
 }

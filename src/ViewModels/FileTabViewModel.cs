@@ -65,9 +65,11 @@ public class FileTabViewModel : ViewModelBase
             _ => Dirty.Value = true);
     }
 
-    public static FileTabViewModel FromLocation(ILocation location)
+    public static FileTabViewModel? FromLocation(ILocation location)
     {
         var dataset = DataProcessing.Instance.LoadDataset(location);
+        if (dataset == null) return null;
+
         return new(dataset, location);
     }
 
@@ -75,7 +77,8 @@ public class FileTabViewModel : ViewModelBase
     {
         if (!Location.Value.IsPhysical) return await SaveAs();
 
-        DataProcessing.Instance.SaveDataset(Location.Value);
+        if (!DataProcessing.Instance.SaveDataset(Location.Value))
+            return false;
         Dirty.Value = false;
 
         return true;
@@ -94,7 +97,8 @@ public class FileTabViewModel : ViewModelBase
         if (file == null) return false;
 
         var destination = new FileLocation(file.Path);
-        DataProcessing.Instance.SaveDatasetAs(Location.Value, destination);
+        if (!DataProcessing.Instance.SaveDatasetAs(Location.Value, destination))
+            return false;
 
         Location.Value = destination;
         Dirty.Value = false;
