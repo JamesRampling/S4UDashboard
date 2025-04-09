@@ -31,23 +31,23 @@ public class MainViewModel : ViewModelBase
     public ReactiveCell<SortMode> TabsSortMode { get; } = new(SortMode.Unsorted);
     public ComputedCell<bool> TabsAreSorted { get; }
 
+    public ReactiveCell<string> SearchText { get; } = new("");
+
     public ReactiveCommand QuitApp { get; } = new(
         () => ServiceProvider.GetService<MainWindow>() is not null,
         _ => ServiceProvider.ExpectService<MainWindow>().Close());
 
-    public void CloseTabCommand(object o)
-    {
-        if (o is not DragTabItem item || item.Header is not FileTabViewModel tab) return;
-        CloseTab(tab);
-    }
-
     public ReactiveCommand GoNextTab { get; }
     public ReactiveCommand GoPrevTab { get; }
+
     public ReactiveCommand CloseSelectedTab { get; }
+    public ReactiveCommand CloseTabCommand { get; }
 
     public ReactiveCommand SaveCurrent { get; }
     public ReactiveCommand SaveAsDialog { get; }
     public ReactiveCommand SaveAll { get; }
+
+    public ReactiveCommand SearchTabs { get; }
 
     public MainViewModel()
     {
@@ -60,16 +60,24 @@ public class MainViewModel : ViewModelBase
             if (mode == SortMode.Unsorted) TabList.Impose();
             else
             {
-                var sf = DataProcessing.GetSortFunc(mode);
+                var sf = DataProcessing.GetSortSelector(mode);
                 TabList.Selector = (vm) => sf(vm.Dataset.Value);
             }
         });
 
         bool AnyTabOpen() => SelectedTab.Value is not null;
+        // CloseTab can currently cause front/backend desync when tabs are sorted.
+        bool UnsortedTabsOpen() => AnyTabOpen() && !TabsAreSorted.Value;
 
         GoNextTab = new(AnyTabOpen, _ => SelectTab(SelectedTabIndex.Value + 1));
         GoPrevTab = new(AnyTabOpen, _ => SelectTab(SelectedTabIndex.Value - 1));
-        CloseSelectedTab = new(AnyTabOpen, _ => CloseTab(SelectedTab.Value!));
+
+        CloseTabCommand = new(UnsortedTabsOpen, o =>
+        {
+            if (o is not DragTabItem item || item.Header is not FileTabViewModel tab) return;
+            CloseTab(tab);
+        });
+        CloseSelectedTab = new(UnsortedTabsOpen, _ => CloseTab(SelectedTab.Value!));
 
         SaveCurrent = new(AnyTabOpen, async _ => await SelectedTab.Value!.SaveCurrent());
         SaveAsDialog = new(AnyTabOpen, async _ => await SelectedTab.Value!.SaveAs());
@@ -83,6 +91,17 @@ public class MainViewModel : ViewModelBase
         {
             foreach (var tab in TabList.Where(f => f.Dirty.Value))
                 await tab.SaveCurrent();
+        });
+
+        SearchTabs = new(() => TabsAreSorted.Value && SearchText.Value.Trim() != "", _ =>
+        {
+            var idx = DataProcessing.Instance.SearchDatasets(TabsSortMode.Value, SearchText.Value.Trim());
+
+            if (idx == -1)
+            {
+                // TODO: make an alert saying no result found
+            }
+            else SelectTab(idx);
         });
     }
 

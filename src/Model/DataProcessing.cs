@@ -24,7 +24,7 @@ public class DataProcessing
     private DataProcessing() { }
     public readonly static DataProcessing Instance = new();
 
-    public static Func<DatasetModel, IComparable> GetSortFunc(SortMode mode) => mode switch
+    public static Func<DatasetModel, IComparable> GetSortSelector(SortMode mode) => mode switch
     {
         SortMode.Unsorted => throw new ArgumentException("attempted to get sort func of unsorted"),
 
@@ -38,10 +38,17 @@ public class DataProcessing
     };
 
     public Dictionary<ILocation, ReactiveCell<DatasetModel>> Datasets = [];
-    public ReactiveCell<SortMode> Mode { get; } = new(SortMode.Unsorted);
 
-    public ImmutableList<DatasetModel> Sorted =>
-        [.. Datasets.Values.Select(c => c.Value).OrderBy(GetSortFunc(Mode.Value) ?? throw new InvalidOperationException())];
+    public int SearchDatasets(SortMode mode, string needle)
+    {
+        var selector = GetSortSelector(mode);
+        var sorted = Datasets
+            .Select(p => selector(p.Value.Value).ToString()
+                ?? throw new InvalidOperationException("failed to get string for value"))
+            .Order().ToImmutableList();
+
+        return FindInSorted(sorted, needle);
+    }
 
     public ReactiveCell<DatasetModel> LoadDataset(ILocation target)
     {
@@ -114,17 +121,16 @@ public class DataProcessing
     }
 
     /// <summary>
-    /// Performs a binary search on <c>sorted</c>, comparing <c>needle</c> to each element
-    /// after having been mapped by <c>selector</c>.
+    /// Performs a binary search on <c>sorted</c>, searching for <c>needle</c>.
     /// </summary>
-    public static int FindByInSorted<T, S>(IReadOnlyList<T> sorted, Func<T, S> selector, S needle) where S : IComparable<S>
+    private static int FindInSorted<T>(IReadOnlyList<T> sorted, T needle) where T : IComparable<T>
     {
         int lowerBound = 0, upperBound = sorted.Count;
 
         while (lowerBound < upperBound)
         {
             var middleIdx = (lowerBound + upperBound) / 2;
-            var current = selector(sorted[middleIdx]);
+            var current = sorted[middleIdx];
 
             switch (needle.CompareTo(current))
             {

@@ -29,13 +29,6 @@
       <TextBox Name="name" Text="{Binding NameField.Value}" Watermark="Name" Grid.Column="1">
         <TextBox.InnerRightContent>
           <StackPanel Orientation="Horizontal">
-            <StackPanel.Styles>
-              <!-- Make PathIcon colour change when button is disabled. -->
-              <Style Selector="Button:disabled PathIcon">
-                <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}"/>
-              </Style>
-            </StackPanel.Styles>
-
             <Button Command="{Binding UpdateAnnotatedName}" ToolTip.Tip="Update Annotated Name">
               <PathIcon Width="10" Height="10" Data="{StaticResource edit_regular}"/>
             </Button>

@@ -11,6 +11,13 @@
              x:Class="S4UDashboard.Views.MainView"
              x:DataType="vm:MainViewModel">
   <Design.DataContext><vm:MainViewModel/></Design.DataContext>
+  <UserControl.Styles>
+    <!-- Make PathIcon colour change when button is disabled. -->
+    <Style Selector="Button:disabled PathIcon">
+      <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}"/>
+    </Style>
+  </UserControl.Styles>
+
   <DockPanel>
     <Border BorderThickness="0 0 0 1"
             BorderBrush="{DynamicResource TextControlBorderBrushDisabled}"
@@ -56,15 +63,27 @@
         </StackPanel>
 
         <Grid ColumnDefinitions="*,4*,*" RowDefinitions="Auto" HorizontalAlignment="Stretch" VerticalAlignment="Center">
-          <Grid.Styles>
-            <Style Selector="TextBox.Center">
-              <Setter Property="TextAlignment" Value="Center"/>
-            </Style>
-          </Grid.Styles>
           <TextBox Watermark="Search..."
                    IsEnabled="{Binding TabsAreSorted.Value}"
-                   Classes.Center="{Binding !$self.IsFocused}"
-                   Grid.Column="1"/>
+                   TextAlignment="Center"
+                   Text="{Binding SearchText.Value}"
+                   Grid.Column="1">
+            <TextBox.InnerLeftContent>
+              <PathIcon Margin="6 0 4 0"
+                        Width="10"
+                        Height="10"
+                        Data="{StaticResource search_regular}"
+                        Foreground="{DynamicResource TextControlForegroundDisabled}"/>
+            </TextBox.InnerLeftContent>
+            <TextBox.InnerRightContent>
+              <Button Margin="4 0 2 0" Command="{Binding SearchTabs}">
+                <PathIcon Width="10" Height="10" Data="{StaticResource arrow_right_regular}"/>
+              </Button>
+            </TextBox.InnerRightContent>
+            <TextBox.KeyBindings>
+              <KeyBinding Command="{Binding SearchTabs}" Gesture="Enter"/>
+            </TextBox.KeyBindings>
+          </TextBox>
         </Grid>
       </DockPanel>
     </Border>
@@ -75,6 +94,7 @@
                              SelectedIndex="{Binding SelectedTabIndex.Value}"
                              SelectedItem="{Binding SelectedTab.Value}"
                              ShowDefaultAddButton="{x:False}"
+                             ShowDefaultCloseButton="{Binding !TabsAreSorted.Value}"
                              CloseItemCommand="{Binding CloseTabCommand}"
                              LeftThumbWidth="0"
                              RightThumbWidth="0"
