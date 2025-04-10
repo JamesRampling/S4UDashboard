@@ -7,7 +7,7 @@ namespace S4UDashboard.Model;
 
 public static class SampleGenerator
 {
-    private static Random rng = new();
+    private static readonly Random Rng = new();
 
     public static readonly GeneratorProfile DefaultProfile = new GeneratorProfile
     {
@@ -69,8 +69,8 @@ public static class SampleGenerator
 
         var names = Enumerable.Range(0, sensorsCount).Select(_ => possibleNames.PickAndRemove());
 
-        var offset = rng.NextDouble();
-        var mult = 1 + (rng.NextDouble() - 0.5) / 2.5;
+        var offset = Rng.NextDouble();
+        var mult = 1 + (Rng.NextDouble() - 0.5) / 2.5;
 
         var sensors = Enumerable
             .Range(0, sensorsCount)
@@ -115,11 +115,11 @@ public static class SampleGenerator
     }
 
     private static T Pick<T>(this IReadOnlyList<T> list) =>
-        list[rng.Next(0, list.Count)];
+        list[Rng.Next(0, list.Count)];
 
     private static T PickAndRemove<T>(this IList<T> list)
     {
-        var idx = rng.Next(0, list.Count);
+        var idx = Rng.Next(0, list.Count);
         var result = list[idx];
         list.RemoveAt(idx);
         return result;
