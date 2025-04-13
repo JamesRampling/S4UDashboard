@@ -23,7 +23,11 @@ public class DataProcessing
 {
     private DataProcessing() { }
     public readonly static DataProcessing Instance = new();
+    public Dictionary<ILocation, ReactiveCell<DatasetModel>> Datasets = [];
 
+    /// <summary>Takes a sorting mode and returns a selector to get the sort property.</summary>
+    /// <param name="mode">The sort mode corresponding to the desired selector.</param>
+    /// <returns>A selector function that gets the property specified by <c>mode</c>.</returns>
     public static Func<DatasetModel, IComparable> GetSortSelector(SortMode mode) => mode switch
     {
         SortMode.Unsorted => throw new ArgumentException("attempted to get sort func of unsorted"),
@@ -37,8 +41,15 @@ public class DataProcessing
         _ => throw new ArgumentException("invalid enum variant"),
     };
 
-    public Dictionary<ILocation, ReactiveCell<DatasetModel>> Datasets = [];
-
+    /// <summary>
+    /// Given a sorting mode and a string to search for, sorts the loaded datasets
+    /// and performs a binary search to find a match.
+    /// </summary>
+    /// <param name="mode">The sort mode by which to order the datasets.</param>
+    /// <param name="needle">The string representation of the property to find.</param>
+    /// <returns>
+    /// The index of the found dataset in the sorted representation, or -1 if no match was found.
+    /// </returns>
     public int SearchDatasets(SortMode mode, string needle)
     {
         var selector = GetSortSelector(mode);
@@ -50,6 +61,13 @@ public class DataProcessing
         return FindInSorted(sorted, needle);
     }
 
+    /// <summary>
+    /// Creates a dataset from annotated data and sensor data, adds it to the currently
+    /// loaded datasets with a new unnamed location, and returns the new location.
+    /// </summary>
+    /// <param name="annotatedData">The annotated data in the new dataset.</param>
+    /// <param name="sensorData">The sensor data in the new dataset.</param>
+    /// <returns>The location of the newly created dataset.</returns>
     public ILocation AddSampleDataset(AnnotatedDataModel annotatedData, SensorDataModel sensorData)
     {
         var calculated = CalculateAuxilliaryData(sensorData);
@@ -65,6 +83,11 @@ public class DataProcessing
         return location;
     }
 
+    /// <summary>Attempts to read a dataset from a physical location.</summary>
+    /// <param name="target">The location to read the dataset from.</param>
+    /// <returns>
+    /// The dataset read from the location, or null if it could not be read successfully.
+    /// </returns>
     private static DatasetModel? ReadDataset(ILocation target)
     {
         try
@@ -82,6 +105,10 @@ public class DataProcessing
         }
     }
 
+    /// <summary>Attempts to write out a dataset to a physical location.</summary>
+    /// <param name="model">The dataset to serialise and write out.</param>
+    /// <param name="target">The physical location to write to.</param>
+    /// <returns>True if writing was successful, false if it failed.</returns>
     private static bool WriteDataset(DatasetModel model, ILocation target)
     {
         try
@@ -100,6 +127,11 @@ public class DataProcessing
         }
     }
 
+    /// <summary>
+    /// Loads a dataset from a location and adds it to the loaded datasets under the target location.
+    /// </summary>
+    /// <param name="target">The location to load the dataset from.</param>
+    /// <returns>The dataset loaded from the location, or null if it could not be loaded.</returns>
     public ReactiveCell<DatasetModel>? LoadDataset(ILocation target)
     {
         if (Datasets.TryGetValue(target, out var existing)) return existing;
@@ -111,7 +143,20 @@ public class DataProcessing
         return Datasets[target];
     }
 
+    /// <summary>
+    /// Saves a dataset at a given location by writing it to its associated location.
+    /// </summary>
+    /// <param name="target">The location associated to the dataset to be saved.</param>
+    /// <returns>True if saving was successful, false if it failed.</returns>
     public bool SaveDataset(ILocation target) => WriteDataset(Datasets[target].Value, target);
+
+    /// <summary>
+    /// Saves a dataset associated to the source location to the destination location and
+    /// reassigns the dataset to the destination location.
+    /// </summary>
+    /// <param name="source">The location associated to the dataset to save.</param>
+    /// <param name="destination">The location to save & reassign the dataset to.</param>
+    /// <returns>True if the operation was successful, false if it failed.</returns>
     public bool SaveDatasetAs(ILocation source, ILocation destination)
     {
         if (Datasets.ContainsKey(destination))
@@ -131,10 +176,9 @@ public class DataProcessing
         return true;
     }
 
-    /// <summary>
-    /// Given a <c>SensorDataModel</c> constructs and returns a <c>CalculatedDataModel</c> based
-    /// on the samples contained in <c>sensorData</c>.
-    /// </summary>
+    /// <summary>Given sensor data, calculates the auxilliary data and returns it.</summary>
+    /// <param name="sensorData">The sensor data from which to calculate the auxillary data.</param>
+    /// <returns>The calculated data derived from the sensor data.</returns>
     public static CalculatedDataModel CalculateAuxilliaryData(SensorDataModel sensorData)
     {
         double min = double.PositiveInfinity, max = double.NegativeInfinity, sum = 0.0;
@@ -154,9 +198,11 @@ public class DataProcessing
         };
     }
 
-    /// <summary>
-    /// Performs a binary search on <c>sorted</c>, searching for <c>needle</c>.
-    /// </summary>
+    /// <summary>Performs a binary search on a sorted list.</summary>
+    /// <typeparam name="T">The type stored in the list. Must be comparable to itself.</typeparam>
+    /// <param name="sorted">The sorted list to search.</param>
+    /// <param name="needle">The value to search the list for.</param>
+    /// <returns>The index of the matched item in the list, or -1 if there was no match.</returns>
     private static int FindInSorted<T>(IReadOnlyList<T> sorted, T needle) where T : IComparable<T>
     {
         int lowerBound = 0, upperBound = sorted.Count;
