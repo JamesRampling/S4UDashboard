@@ -153,7 +153,7 @@ public class MainViewModel : ViewModelBase
         else if (unique.Any())
         {
             foreach (var vm in unique.Select(loc => FileTabViewModel.FromLocation(loc)))
-                if (vm != null) TabList.Add(vm);
+                if (vm != null) AddTabViewModel(vm);
             if (TabsSortMode.Value == SortMode.Unsorted && TabList.Count > 0)
                 SelectTab(TabList.Count);
         }
@@ -173,9 +173,21 @@ public class MainViewModel : ViewModelBase
         var vm = FileTabViewModel.FromLocation(loc);
         if (vm == null) return;
 
-        TabList.Add(vm);
+        AddTabViewModel(vm);
         var idx = TabsSortMode.Value == SortMode.Unsorted ? TabList.Count : TabList.IndexOf(vm);
         SelectTab(idx);
+    }
+
+    private void AddTabViewModel(FileTabViewModel vm)
+    {
+        TabList.Add(vm);
+        EffectManager.Watch(
+            () => EffectManager.Track(vm, "NameNotify"),
+            () => {
+                if (TabsSortMode.Value == SortMode.Name)
+                    TabsSortMode.Value = SortMode.Unsorted;
+            }
+        );
     }
 
     private async Task<int> HandleClosingTab(FileTabViewModel tab)

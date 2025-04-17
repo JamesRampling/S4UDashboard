@@ -48,10 +48,10 @@ public class FileTabViewModel : ViewModelBase
         UpdateAnnotatedName = new(
             () => NameField.Value.Trim() != Dataset.Value.AnnotatedData.AnnotatedName
                && NameField.Value.Trim() != "",
-            _ => UpdateData(d => d with { AnnotatedName = NameField.Value.Trim() }));
+            _ => UpdateData(d => d with { AnnotatedName = NameField.Value.Trim() }, true));
         ClearAnnotatedName = new(
             () => Dataset.Value.AnnotatedData.AnnotatedName != null,
-            _ => UpdateData(d => d with { AnnotatedName = null }));
+            _ => UpdateData(d => d with { AnnotatedName = null }, true));
 
         EffectManager.Watch(
             () => LowerField.Value,
@@ -106,10 +106,13 @@ public class FileTabViewModel : ViewModelBase
         return true;
     }
 
-    private void UpdateData(Func<AnnotatedDataModel, AnnotatedDataModel> update)
+    private void UpdateData(Func<AnnotatedDataModel, AnnotatedDataModel> update, bool notifyName = false)
     {
         var dataset = Dataset.Value;
         Dataset.Value = dataset with { AnnotatedData = update(dataset.AnnotatedData) };
+
+        // hack to mitigate names being the only mutable, sortable property
+        if (notifyName) EffectManager.Trigger(this, "NameNotify");
     }
 
     public static readonly FilePickerFileType SDSFileType = new("Sensing4U Dataset (*.sds)")

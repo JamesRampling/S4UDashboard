@@ -69,6 +69,16 @@ public static class EffectManager
     /// <summary>
     /// Watches a source and executes an effect when it is triggered.
     /// </summary>
+    public static void Watch(Action source, Action effect)
+    {
+        EffectStack.Push(() => effect());
+        source();
+        EffectStack.Pop();
+    }
+
+    /// <summary>
+    /// Watches a source and executes an effect passing the result of the source when it is triggered.
+    /// </summary>
     public static void Watch<T>(Func<T> source, Action<T> effect)
     {
         EffectStack.Push(() => effect(source()));
