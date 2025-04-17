@@ -1,6 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:tabalonia="using:Tabalonia.Themes.Custom"
+             xmlns:tabalonia="using:Tabalonia.Themes.Fluent"
              xmlns:controls="using:S4UDashboard.Controls"
              x:Class="S4UDashboard.App"
              RequestedThemeVariant="Default">
@@ -13,7 +13,7 @@
         </FluentTheme>
 
         <StyleInclude Source="avares://Avalonia.Controls.TreeDataGrid/Themes/Fluent.axaml"/>
-        <tabalonia:CustomTheme/>
+        <tabalonia:FluentTheme/>
     </Application.Styles>
 
     <Application.Resources>
