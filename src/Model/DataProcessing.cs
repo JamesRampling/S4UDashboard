@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 
@@ -88,12 +89,14 @@ public class DataProcessing
     /// <returns>
     /// The dataset read from the location, or null if it could not be read successfully.
     /// </returns>
-    private static DatasetModel? ReadDataset(ILocation target)
+    private static bool ReadDataset(ILocation target, [NotNullWhen(true)] out DatasetModel model)
     {
         try
         {
             using var reader = new BinaryReader(target.OpenReadStream());
-            return reader.Read(Serializers.DatasetDeserializer);
+
+            model = reader.Read(Serializers.DatasetDeserializer);
+            return true;
         }
         catch (Exception)
         {
@@ -101,7 +104,9 @@ public class DataProcessing
                 "Failed to load",
                 $"There was an issue loading {target.LocationHint}",
                 "Please ensure the file is valid and readable.");
-            return null;
+
+            model = default;
+            return false;
         }
     }
 
@@ -132,15 +137,15 @@ public class DataProcessing
     /// </summary>
     /// <param name="target">The location to load the dataset from.</param>
     /// <returns>The dataset loaded from the location, or null if it could not be loaded.</returns>
-    public ReactiveCell<DatasetModel>? LoadDataset(ILocation target)
+    public bool LoadDataset(ILocation target, [NotNullWhen(true)] out ReactiveCell<DatasetModel> model)
     {
-        if (Datasets.TryGetValue(target, out var existing)) return existing;
+        if (Datasets.TryGetValue(target, out model!)) return true;
+        if (!ReadDataset(target, out var raw)) return false;
 
-        var ds = ReadDataset(target);
-        if (!ds.HasValue) return null;
+        model = new(raw);
+        Datasets[target] = model;
 
-        Datasets[target] = new(ds.Value);
-        return Datasets[target];
+        return true;
     }
 
     /// <summary>

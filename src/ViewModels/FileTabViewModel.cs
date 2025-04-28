@@ -67,9 +67,8 @@ public class FileTabViewModel : ViewModelBase
 
     public static FileTabViewModel? FromLocation(ILocation location)
     {
-        var dataset = DataProcessing.Instance.LoadDataset(location);
-        if (dataset == null) return null;
-
+        if (!DataProcessing.Instance.LoadDataset(location, out var dataset))
+            return null;
         return new(dataset, location);
     }
 
