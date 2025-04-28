@@ -86,9 +86,10 @@ public class DataProcessing
 
     /// <summary>Attempts to read a dataset from a physical location.</summary>
     /// <param name="target">The location to read the dataset from.</param>
-    /// <returns>
-    /// The dataset read from the location, or null if it could not be read successfully.
-    /// </returns>
+    /// <param name="model">
+    /// The variable to read the dataset into, only initialised if the return value was true.
+    /// </param>
+    /// <returns>True if the dataset was read successfully, false otherwise.</returns>
     private static bool ReadDataset(ILocation target, [NotNullWhen(true)] out DatasetModel model)
     {
         try
@@ -136,7 +137,10 @@ public class DataProcessing
     /// Loads a dataset from a location and adds it to the loaded datasets under the target location.
     /// </summary>
     /// <param name="target">The location to load the dataset from.</param>
-    /// <returns>The dataset loaded from the location, or null if it could not be loaded.</returns>
+    /// <param name="model">
+    /// The variable to load a reference to the dataset into, only initialised if the return value was true.
+    /// </param>
+    /// <returns>True if the dataset was loaded successfully, false otherwise.</returns>
     public bool LoadDataset(ILocation target, [NotNullWhen(true)] out ReactiveCell<DatasetModel> model)
     {
         if (Datasets.TryGetValue(target, out model!)) return true;
