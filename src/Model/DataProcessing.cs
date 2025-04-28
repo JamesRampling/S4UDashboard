@@ -24,7 +24,7 @@ public class DataProcessing
 {
     private DataProcessing() { }
     public readonly static DataProcessing Instance = new();
-    public Dictionary<ILocation, ReactiveCell<DatasetModel>> Datasets = [];
+    public readonly Dictionary<ILocation, ReactiveCell<DatasetModel>> Datasets = [];
 
     /// <summary>Takes a sorting mode and returns a selector to get the sort property.</summary>
     /// <param name="mode">The sort mode corresponding to the desired selector.</param>
