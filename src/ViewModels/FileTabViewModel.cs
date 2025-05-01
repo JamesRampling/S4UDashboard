@@ -67,7 +67,8 @@ public class FileTabViewModel : ViewModelBase
 
     public static FileTabViewModel? FromLocation(ILocation location)
     {
-        if (!DataProcessing.Instance.LoadDataset(location, out var dataset))
+        ReactiveCell<DatasetModel>? dataset = default;
+        if (!DataProcessing.Instance.LoadDataset(location, ref dataset))
             return null;
         return new(dataset, location);
     }

@@ -90,7 +90,7 @@ public class DataProcessing
     /// The variable to read the dataset into, only initialised if the return value was true.
     /// </param>
     /// <returns>True if the dataset was read successfully, false otherwise.</returns>
-    private static bool ReadDataset(ILocation target, [NotNullWhen(true)] out DatasetModel model)
+    private static bool ReadDataset(ILocation target, [NotNullWhen(true)] ref DatasetModel model)
     {
         try
         {
@@ -141,10 +141,11 @@ public class DataProcessing
     /// The variable to load a reference to the dataset into, only initialised if the return value was true.
     /// </param>
     /// <returns>True if the dataset was loaded successfully, false otherwise.</returns>
-    public bool LoadDataset(ILocation target, [NotNullWhen(true)] out ReactiveCell<DatasetModel> model)
+    public bool LoadDataset(ILocation target, [NotNullWhen(true)] ref ReactiveCell<DatasetModel>? model)
     {
+        DatasetModel raw = default;
         if (Datasets.TryGetValue(target, out model!)) return true;
-        if (!ReadDataset(target, out var raw)) return false;
+        if (!ReadDataset(target, ref raw)) return false;
 
         model = new(raw);
         Datasets[target] = model;
