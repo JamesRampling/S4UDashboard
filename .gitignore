@@ -485,3 +485,9 @@ $RECYCLE.BIN/
 
 # vscode settings
 .vscode/
+
+# docfx api files
+docs/api/
+
+# docfx generated site
+_site/

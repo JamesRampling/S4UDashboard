@@ -165,7 +165,7 @@ public class DataProcessing
     /// reassigns the dataset to the destination location.
     /// </summary>
     /// <param name="source">The location associated to the dataset to save.</param>
-    /// <param name="destination">The location to save & reassign the dataset to.</param>
+    /// <param name="destination">The location to save &amp; reassign the dataset to.</param>
     /// <returns>True if the operation was successful, false if it failed.</returns>
     public bool SaveDatasetAs(ILocation source, ILocation destination)
     {
