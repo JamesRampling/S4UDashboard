@@ -28,7 +28,7 @@ public class MainViewModel : ViewModelBase
 
     public ReactiveCommand OpenWiki { get; } = new(() => true, _ =>
         ServiceProvider.ExpectService<ILauncher>()
-            .LaunchUriAsync(new("https://github.com/JamesRampling/S4UDashboard/wiki")));
+            .LaunchUriAsync(new("https://jamesrampling.github.io/s4ud/")));
     public ReactiveCommand AboutAlert { get; } = new(() => true, _ =>
         ServiceProvider.ExpectService<AlertService>().Alert(
             "About",
