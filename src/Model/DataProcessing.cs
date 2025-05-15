@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -53,13 +54,18 @@ public class DataProcessing
     /// </returns>
     public int SearchDatasets(SortMode mode, string needle)
     {
+        Trace.WriteLine($"SearchDatasets mode: {mode}; needle: {needle}");
+        Trace.Indent();
+
         var selector = GetSortSelector(mode);
         var sorted = Datasets
             .Select(p => selector(p.Value.Value).ToString()
                 ?? throw new InvalidOperationException("failed to get string for value"))
             .Order().ToImmutableList();
 
-        return FindInSorted(sorted, needle);
+        var res = FindInSorted(sorted, needle);
+        Trace.Unindent();
+        return res;
     }
 
     /// <summary>
@@ -71,6 +77,9 @@ public class DataProcessing
     /// <returns>The location of the newly created dataset.</returns>
     public ILocation AddSampleDataset(AnnotatedDataModel annotatedData, SensorDataModel sensorData)
     {
+        Trace.WriteLine($"AddSampleDataset name: {annotatedData.AnnotatedName ?? "none"}");
+        Trace.Indent();
+
         var calculated = CalculateAuxilliaryData(sensorData);
         var location = new UnnamedLocation();
 
@@ -81,6 +90,7 @@ public class DataProcessing
             CalculatedData = calculated,
         });
 
+        Trace.Unindent();
         return location;
     }
 
@@ -92,15 +102,20 @@ public class DataProcessing
     /// <returns>True if the dataset was read successfully, false otherwise.</returns>
     private static bool ReadDataset(ILocation target, [NotNullWhen(true)] ref DatasetModel model)
     {
+        Trace.WriteLine($"ReadDataset target: {target.LocationHint}");
+        Trace.Indent();
+
         try
         {
             using var reader = new BinaryReader(target.OpenReadStream());
 
             model = reader.Read(Serializers.DatasetDeserializer);
+            Trace.WriteLine($"successfully read dataset from {target.LocationHint}");
             return true;
         }
         catch (Exception)
         {
+            Trace.WriteLine($"failed to read dataset from {target.LocationHint}");
             ServiceProvider.ExpectService<AlertService>().Alert(
                 "Failed to load",
                 $"There was an issue loading {target.LocationHint}",
@@ -108,6 +123,8 @@ public class DataProcessing
 
             model = default;
             return false;
+        } finally {
+            Trace.Unindent();
         }
     }
 
@@ -117,19 +134,26 @@ public class DataProcessing
     /// <returns>True if writing was successful, false if it failed.</returns>
     private static bool WriteDataset(DatasetModel model, ILocation target)
     {
+        Trace.WriteLine($"WriteDataset name: {model.AnnotatedData.AnnotatedName ?? "none"}; target: {target.LocationHint}");
+        Trace.Indent();
+
         try
         {
             using var writer = new BinaryWriter(target.OpenWriteStream());
             Serializers.DatasetSerializer(writer, model);
+            Trace.WriteLine($"successfully wrote dataset to {target.LocationHint}");
             return true;
         }
         catch (Exception)
         {
+            Trace.WriteLine($"failed to write dataset to {target.LocationHint}");
             ServiceProvider.ExpectService<AlertService>().Alert(
                 "Failed to save",
                 $"There was an issue saving {target.LocationHint}",
                 "Please make sure the file location is writable.");
             return false;
+        } finally {
+            Trace.Unindent();
         }
     }
 
@@ -143,14 +167,22 @@ public class DataProcessing
     /// <returns>True if the dataset was loaded successfully, false otherwise.</returns>
     public bool LoadDataset(ILocation target, [NotNullWhen(true)] ref ReactiveCell<DatasetModel>? model)
     {
-        DatasetModel raw = default;
-        if (Datasets.TryGetValue(target, out model!)) return true;
-        if (!ReadDataset(target, ref raw)) return false;
+        Trace.WriteLine($"LoadDataset target: {target.LocationHint}");
+        Trace.Indent();
 
-        model = new(raw);
-        Datasets[target] = model;
+        try {
+            DatasetModel raw = default;
+            if (Datasets.TryGetValue(target, out model!)) return true;
+            if (!ReadDataset(target, ref raw)) return false;
 
-        return true;
+            model = new(raw);
+            Datasets[target] = model;
+            Trace.WriteLine($"succeeded loading dataset with name: {raw.AnnotatedData.AnnotatedName ?? "none"}");
+
+            return true;
+        } finally {
+            Trace.Unindent();
+        }
     }
 
     /// <summary>
@@ -169,21 +201,28 @@ public class DataProcessing
     /// <returns>True if the operation was successful, false if it failed.</returns>
     public bool SaveDatasetAs(ILocation source, ILocation destination)
     {
-        if (Datasets.ContainsKey(destination))
-        {
-            ServiceProvider.ExpectService<AlertService>().Alert(
-                "Cannot overwrite",
-                "There is already an open file at that location",
-                "Close the conflicting file before attempting to overwrite.");
-            return false;
+        Trace.WriteLine($"SaveDatasetAs source: {source.LocationHint}; destination {destination.LocationHint}");
+        Trace.Indent();
+
+        try {
+            if (Datasets.ContainsKey(destination))
+            {
+                ServiceProvider.ExpectService<AlertService>().Alert(
+                    "Cannot overwrite",
+                    "There is already an open file at that location",
+                    "Close the conflicting file before attempting to overwrite.");
+                return false;
+            }
+
+            var dataset = Datasets[source];
+            if (!WriteDataset(dataset.Value, destination)) return false;
+
+            Datasets.Remove(source);
+            Datasets[destination] = dataset;
+            return true;
+        } finally {
+            Trace.Unindent();
         }
-
-        var dataset = Datasets[source];
-        if (!WriteDataset(dataset.Value, destination)) return false;
-
-        Datasets.Remove(source);
-        Datasets[destination] = dataset;
-        return true;
     }
 
     /// <summary>Given sensor data, calculates the auxilliary data and returns it.</summary>
@@ -191,6 +230,8 @@ public class DataProcessing
     /// <returns>The calculated data derived from the sensor data.</returns>
     public static CalculatedDataModel CalculateAuxilliaryData(SensorDataModel sensorData)
     {
+        Trace.WriteLine("CalculateAuxilliaryData");
+        Trace.Indent();
         double min = double.PositiveInfinity, max = double.NegativeInfinity, sum = 0.0;
 
         foreach (var sample in sensorData.Samples.EnumerateFlat())
@@ -200,6 +241,12 @@ public class DataProcessing
             sum += sample;
         }
 
+        Trace.WriteLine($"Sum: {sum}");
+        Trace.WriteLine($"Minimum: {min}");
+        Trace.WriteLine($"Maximum: {max}");
+        Trace.WriteLine($"Mean: {sum / sensorData.Samples.Length}");
+
+        Trace.Unindent();
         return new CalculatedDataModel
         {
             Mean = sum / sensorData.Samples.Length,
@@ -215,6 +262,9 @@ public class DataProcessing
     /// <returns>The index of the matched item in the list, or -1 if there was no match.</returns>
     private static int FindInSorted<T>(IReadOnlyList<T> sorted, T needle) where T : IComparable<T>
     {
+        Trace.WriteLine($"FindInSorted needle: {needle}");
+        Trace.Indent();
+
         int lowerBound = 0, upperBound = sorted.Count;
 
         while (lowerBound < upperBound)
@@ -222,9 +272,11 @@ public class DataProcessing
             var middleIdx = (lowerBound + upperBound) / 2;
             var current = sorted[middleIdx];
 
+            Trace.WriteLine($"current bounds [{lowerBound};{upperBound})");
             switch (needle.CompareTo(current))
             {
                 case 0:
+                    Trace.Unindent();
                     return middleIdx;
                 case < 0:
                     upperBound = middleIdx;
@@ -235,6 +287,7 @@ public class DataProcessing
             }
         }
 
+        Trace.Unindent();
         return -1;
     }
 }
