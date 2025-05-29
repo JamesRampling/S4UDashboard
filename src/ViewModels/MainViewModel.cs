@@ -70,8 +70,10 @@ public class MainViewModel : ViewModelBase
         // CloseTab can currently cause front/backend desync when tabs are sorted.
         bool UnsortedTabsOpen() => AnyTabOpen() && !TabsAreSorted.Value;
 
-        GoNextTab = new(AnyTabOpen, _ => SelectTab(SelectedTabIndex.Value + 1));
-        GoPrevTab = new(AnyTabOpen, _ => SelectTab(SelectedTabIndex.Value - 1));
+        GoNextTab = new(
+            () => SelectedTabIndex.Value >= 0 && SelectedTabIndex.Value < TabList.Count - 1,
+            _ => SelectTab(SelectedTabIndex.Value + 1));
+        GoPrevTab = new(() => SelectedTabIndex.Value > 0, _ => SelectTab(SelectedTabIndex.Value - 1));
 
         CloseTabCommand = new(UnsortedTabsOpen, o =>
         {
@@ -183,7 +185,8 @@ public class MainViewModel : ViewModelBase
         TabList.Add(vm);
         EffectManager.Watch(
             () => EffectManager.Track(vm, "NameNotify"),
-            () => {
+            () =>
+            {
                 if (TabsSortMode.Value == SortMode.Name)
                     TabsSortMode.Value = SortMode.Unsorted;
             }
