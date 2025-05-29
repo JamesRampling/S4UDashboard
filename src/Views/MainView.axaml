@@ -55,7 +55,14 @@
                     SelectedItem="{Binding TabsSortMode.Value}"/>
         </StackPanel>
 
-        <Grid ColumnDefinitions="*,4*,*" RowDefinitions="Auto" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+        <DockPanel.Styles>
+          <Style Selector="Grid.SearchTooltip">
+            <Setter Property="ToolTip.Tip" Value="Select a Sort By value to enable searching"/>
+          </Style>
+        </DockPanel.Styles>
+
+        <Grid ColumnDefinitions="*,4*,*" RowDefinitions="Auto" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+              Classes.SearchTooltip="{Binding !TabsAreSorted.Value}">
           <TextBox Watermark="Search..."
                    IsEnabled="{Binding TabsAreSorted.Value}"
                    TextAlignment="Center"

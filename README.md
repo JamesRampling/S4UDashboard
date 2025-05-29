@@ -14,5 +14,4 @@ docfx docs/docfx.json --serve
 
 ### TODO
 
--   Clarify how to search
 -   Doc comment everything
