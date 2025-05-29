@@ -43,12 +43,14 @@
       <NumericUpDown Name="lower"
                      Value="{Binding LowerField.Value}"
                      Classes.HasMaximum="{Binding #upper.Value, Converter={x:Static ObjectConverters.IsNotNull}}"
+                     Watermark="-∞"
                      Grid.Column="3"/>
 
       <Label Content="Upper Threshold" Target="upper" Grid.Column="4"/>
       <NumericUpDown Name="upper"
                      Value="{Binding UpperField.Value}"
                      Classes.HasMinimum="{Binding #lower.Value, Converter={x:Static ObjectConverters.IsNotNull}}"
+                     Watermark="+∞"
                      Grid.Column="5"/>
     </Grid>
 
