@@ -5,11 +5,18 @@ using System.Linq;
 
 namespace S4UDashboard.Model;
 
+/// <summary>A utility class to generate sample datasets.
+/// <para>
+/// Uses profiles that allow parametrising the names of sensors, the types of
+/// measurements they make, and the noise function for the samples.
+/// </para>
+/// </summary>
 public static class SampleGenerator
 {
     private static readonly Random Rng = new();
 
-    public static readonly GeneratorProfile DefaultProfile = new GeneratorProfile
+    /// <summary>The default generator profile for sample data.</summary>
+    public static readonly GeneratorProfile DefaultProfile = new()
     {
         SensorNames = [
             "kitchen",
@@ -58,9 +65,14 @@ public static class SampleGenerator
         ],
     };
 
-    // The noise generation in this function isn't strictly /good/, but it's mostly suitable for our purposes.
+    /// <summary>
+    /// Generates a sensor data component for the specified generator profile with the requested
+    /// number of sensors and samples per sensor.
+    /// </summary>
     public static SensorDataModel GenerateSensorData(GeneratorProfile profile, int sensorsCount, int samplesPerSensor)
     {
+        // The noise generation in this function isn't strictly /good/, but it's mostly suitable for our purposes.
+
         if (sensorsCount > profile.SensorNames.Length)
             throw new ArgumentException("not enough sensor names in profile to satisfy request");
 
@@ -84,7 +96,7 @@ public static class SampleGenerator
         return new SensorDataModel
         {
             MeasurementIdentifier = sensorProfile.MeasurementIdentifier,
-            SensorNames = names.Order().ToImmutableArray(),
+            SensorNames = [.. names.Order()],
             Samples = samples,
         };
     }
@@ -126,21 +138,39 @@ public static class SampleGenerator
     }
 }
 
+/// <summary>A sample data generator profile.
+/// <para>
+/// Contains a list of potential sensor names, and a list of potential sensor profiles.
+/// </para>
+/// </summary>
 public readonly record struct GeneratorProfile(
     ImmutableArray<string> SensorNames,
     ImmutableArray<SensorProfile> SensorProfiles
 );
 
+/// <summary>Represents an arbitrary sensor as a unit of measurement and a noise profile.</summary>
 public readonly record struct SensorProfile(
     string MeasurementIdentifier,
     FBMProfile NoiseProfile
 );
 
+/// <summary>A noise profile for Fractional Brownian Motion.</summary>
 public readonly record struct FBMProfile(
+    /// <summary>The numbers of octaves of noise to layer.</summary>
     int Octaves,
+
+    /// <summary>The rate at which frequency changes as a multiplier per octave.</summary>
     double Lacunarity,
+
+    /// <summary>The rate at which amplitude changes as a multiplier per octave.</summary>
     double Gain,
+
+    /// <summary>The initial amplitude of the noise.</summary>
     double InitialAmplitude,
+
+    /// <summary>The initial frequency of the noise.</summary>
     double InitialFrequency,
+
+    /// <summary>A one dimensional noise function to generate each octave of noise.</summary>
     Func<double, double> NoiseFn
 );

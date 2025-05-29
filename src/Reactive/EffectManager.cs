@@ -16,7 +16,15 @@ namespace S4UDashboard.Reactive;
 /// <seealso href="https://vuejs.org/guide/extras/reactivity-in-depth.html"/>
 public static class EffectManager
 {
+    /// <summary>
+    /// A map with weak keys, where the keys are the targets of the subscriptions and the values
+    /// are further mappings between a property name and a set of subscribed actions.
+    /// </summary>
     private readonly static ConditionalWeakTable<object, Dictionary<string, HashSet<Action>>> Subscriptions = [];
+
+    /// <summary>
+    /// The stack of currently executing effects. The top effect is subscribed whenever a track happens.
+    /// </summary>
     private readonly static Stack<Action?> EffectStack = [];
 
     /// <summary>Subscribes the active effect to the specified dependency.

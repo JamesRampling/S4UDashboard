@@ -15,13 +15,20 @@ namespace S4UDashboard.Controls;
 // registered until the menu is interacted with. This works around it by adding the
 // hotkeys directly to the window when the control is attached. It also uses InputGesture
 // as the source of the hotkey's keybind, so that it only has to be specified only once.
+
+/// <summary>
+/// A variant of <c>Menu</c> that registers each item's input gesture as window keybindings
+/// when it is attached to the visual tree.
+/// </summary>
 public class HKMenu : Menu
 {
     // Retain normal Menu styling.
     protected override Type StyleKeyOverride => typeof(Menu);
 
+    /// <summary>The list of registered hotkeys.</summary>
     private ImmutableHashSet<KeyBinding>? _keyBindings;
 
+    /// <summary>Performs the registration of input gestures as window hotkeys.</summary>
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
@@ -42,6 +49,7 @@ public class HKMenu : Menu
         window.KeyBindings.AddRange(_keyBindings);
     }
 
+    /// <summary>Removes all previously registered hotkeys from the window.</summary>
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);

@@ -10,6 +10,9 @@ using S4UDashboard.Reactive;
 
 namespace S4UDashboard.Model;
 
+/// <summary>
+/// Represents all of the possible properties datasets can be sorted by.
+/// </summary>
 public enum SortMode
 {
     Unsorted,
@@ -24,7 +27,9 @@ public enum SortMode
 public class DataProcessing
 {
     private DataProcessing() { }
+    /// <summary>The singleton instance for <c>DataProcessing</c>.</summary>
     public readonly static DataProcessing Instance = new();
+    /// <summary>The list of currently loaded datasets, associated by location.</summary>
     public readonly Dictionary<ILocation, ReactiveCell<DatasetModel>> Datasets = [];
 
     /// <summary>Takes a sorting mode and returns a selector to get the sort property.</summary>
@@ -123,7 +128,9 @@ public class DataProcessing
 
             model = default;
             return false;
-        } finally {
+        }
+        finally
+        {
             Trace.Unindent();
         }
     }
@@ -152,7 +159,9 @@ public class DataProcessing
                 $"There was an issue saving {target.LocationHint}",
                 "Please make sure the file location is writable.");
             return false;
-        } finally {
+        }
+        finally
+        {
             Trace.Unindent();
         }
     }
@@ -170,7 +179,8 @@ public class DataProcessing
         Trace.WriteLine($"LoadDataset target: {target.LocationHint}");
         Trace.Indent();
 
-        try {
+        try
+        {
             DatasetModel raw = default;
             if (Datasets.TryGetValue(target, out model!)) return true;
             if (!ReadDataset(target, ref raw)) return false;
@@ -180,7 +190,9 @@ public class DataProcessing
             Trace.WriteLine($"succeeded loading dataset with name: {raw.AnnotatedData.AnnotatedName ?? "none"}");
 
             return true;
-        } finally {
+        }
+        finally
+        {
             Trace.Unindent();
         }
     }
@@ -204,7 +216,8 @@ public class DataProcessing
         Trace.WriteLine($"SaveDatasetAs source: {source.LocationHint}; destination {destination.LocationHint}");
         Trace.Indent();
 
-        try {
+        try
+        {
             if (Datasets.ContainsKey(destination))
             {
                 ServiceProvider.ExpectService<AlertService>().Alert(
@@ -220,7 +233,9 @@ public class DataProcessing
             Datasets.Remove(source);
             Datasets[destination] = dataset;
             return true;
-        } finally {
+        }
+        finally
+        {
             Trace.Unindent();
         }
     }
