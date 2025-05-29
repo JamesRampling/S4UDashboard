@@ -11,3 +11,10 @@ To generate the API documentation, ensure docfx is installed and run:
 ```sh
 docfx docs/docfx.json --serve
 ```
+
+
+### TODO
+- Disable Next & Prev when at edges
+- Automatically visualise thresholds when changed
+- Clarify how to search
+- Doc comment everything
