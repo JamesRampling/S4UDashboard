@@ -55,10 +55,18 @@ public class FileTabViewModel : ViewModelBase
 
         EffectManager.Watch(
             () => LowerField.Value,
-            l => UpdateData(d => d with { LowerThreshold = l }));
+            l =>
+            {
+                UpdateData(d => d with { LowerThreshold = l });
+                VisualiseCells.Value = true;
+            });
         EffectManager.Watch(
             () => UpperField.Value,
-            u => UpdateData(d => d with { UpperThreshold = u }));
+            u =>
+            {
+                UpdateData(d => d with { UpperThreshold = u });
+                VisualiseCells.Value = true;
+            });
 
         EffectManager.Watch(
             () => Dataset.Value,
