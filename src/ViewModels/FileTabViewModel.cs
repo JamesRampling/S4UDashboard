@@ -40,7 +40,7 @@ public class FileTabViewModel : ViewModelBase
         UpperField = new(dataset.Value.AnnotatedData.UpperThreshold);
 
         Header = new(() => Dataset.Value.AnnotatedData.AnnotatedName ?? Location.Value.LocationHint);
-        GridSource = new(Dataset.Value.SensorData.Samples);
+        GridSource = new(Dataset.Value.SensorData.Samples.EnumerateGrid());
         GridSource.Columns.AddRange(Dataset.Value.SensorData.SensorNames.Select(
             (s, i) => new TextColumn<IEnumerable<double>, double>(s, row => row.ElementAt(i))
         ));

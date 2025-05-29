@@ -79,7 +79,7 @@ public static class SampleGenerator
                     .Select(v => Math.Round(v * mult * 1e3) / 1e3)
             );
 
-        var samples = new Immutable2DArray<double>(sensors.SelectMany(x => x), samplesPerSensor, sensorsCount);
+        var samples = sensors.To2DArray(sensorsCount, samplesPerSensor);
 
         return new SensorDataModel
         {

@@ -43,7 +43,7 @@ public static class Serializers
         {
             MeasurementIdentifier = measurementIdentifier,
             SensorNames = sensorNames,
-            Samples = new(samples, nSamples, sensorNames.Length),
+            Samples = samples.To2DArray(sensorNames.Length, nSamples),
         };
     };
 
@@ -51,7 +51,7 @@ public static class Serializers
     {
         w.Write(i.MeasurementIdentifier);
         w.WriteEnumerable(WriteString, i.SensorNames);
-        w.Write(i.Samples.Rows);
+        w.Write(i.Samples.GetLength(1));
         w.WriteRawEnumerable(WriteDouble, i.Samples.EnumerateFlat());
     };
 
