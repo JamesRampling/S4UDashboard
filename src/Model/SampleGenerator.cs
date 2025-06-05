@@ -13,6 +13,7 @@ namespace S4UDashboard.Model;
 /// </summary>
 public static class SampleGenerator
 {
+    /// <summary>The random number generator instance for the sample generator.</summary>
     private static readonly Random Rng = new();
 
     /// <summary>The default generator profile for sample data.</summary>
@@ -69,6 +70,9 @@ public static class SampleGenerator
     /// Generates a sensor data component for the specified generator profile with the requested
     /// number of sensors and samples per sensor.
     /// </summary>
+    /// <param name="profile">The generator profile to generate from.</param>
+    /// <param name="sensorsCount">The number of sensors (or columns) to generate.</param>
+    /// <param name="samplesPerSensor">The number of samples (or rows) to generate per sensor.</param>
     public static SensorDataModel GenerateSensorData(GeneratorProfile profile, int sensorsCount, int samplesPerSensor)
     {
         // The noise generation in this function isn't strictly /good/, but it's mostly suitable for our purposes.
@@ -101,6 +105,12 @@ public static class SampleGenerator
         };
     }
 
+    /// <summary>
+    /// Generates a column of samples.
+    /// </summary>
+    /// <param name="profile">The sensor profile to generate from.</param>
+    /// <param name="samplesPerSensor">The number of samples (or rows) to generate.</param>
+    /// <param name="transform">A transformation function to offset the noise coordinate.</param>
     private static IEnumerable<double> GenerateColumn(
         SensorProfile profile,
         int samplesPerSensor,
@@ -109,6 +119,11 @@ public static class SampleGenerator
         .Range(0, samplesPerSensor)
         .Select(x => FractionalBrownianMotion(transform(x), profile.NoiseProfile));
 
+    /// <summary>
+    /// Generates a single sample with fractional brownian motion.
+    /// </summary>
+    /// <param name="x">The coordinate of the sample to generate.</param>
+    /// <param name="profile">The FBM profile to generate from.</param>
     private static double FractionalBrownianMotion(double x, FBMProfile profile)
     {
         double t = 0;
@@ -126,9 +141,17 @@ public static class SampleGenerator
         return t;
     }
 
+    /// <summary>
+    /// Picks an element out of a list at random.
+    /// </summary>
+    /// <param name="list">The list to pick from.</param>
     private static T Pick<T>(this IReadOnlyList<T> list) =>
         list[Rng.Next(0, list.Count)];
 
+    /// <summary>
+    /// Picks an element out of a list at random and removes it from the list.
+    /// </summary>
+    /// <param name="list">The list to pick from.</param>
     private static T PickAndRemove<T>(this IList<T> list)
     {
         var idx = Rng.Next(0, list.Count);
@@ -144,13 +167,19 @@ public static class SampleGenerator
 /// </para>
 /// </summary>
 public readonly record struct GeneratorProfile(
+    /// <summary>An array of possible sensor names for the profile.</summary>
     ImmutableArray<string> SensorNames,
+
+    /// <summary>An array of possible sensor profiles for the generator profile.</summary>
     ImmutableArray<SensorProfile> SensorProfiles
 );
 
 /// <summary>Represents an arbitrary sensor as a unit of measurement and a noise profile.</summary>
 public readonly record struct SensorProfile(
+    /// <summary>A string representing the kind of measurement this sensor records.</summary>
     string MeasurementIdentifier,
+
+    /// <summary>The FBM profile of the sensor.</summary>
     FBMProfile NoiseProfile
 );
 

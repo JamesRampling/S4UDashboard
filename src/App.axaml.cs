@@ -8,6 +8,7 @@ using S4UDashboard.Views;
 
 namespace S4UDashboard;
 
+/// <summary>The Avalonia application entrypoint.</summary>
 public partial class App : Application
 {
     public override void Initialize()

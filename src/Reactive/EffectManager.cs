@@ -33,6 +33,8 @@ public static class EffectManager
     /// specified dependency. The effect will then be executed when the dependency is triggered.
     /// </para>
     /// </summary>
+    /// <param name="target">The object to track accesses on.</param>
+    /// <param name="key">The property to track accesses on.</param>
     public static void Track(object target, string key)
     {
         if (EffectStack.TryPeek(out var activeEffect) && activeEffect != null)
@@ -49,6 +51,8 @@ public static class EffectManager
     /// Further dependencies may be subscribed to within the effect invocation if tracking is not paused.
     /// </para>
     /// </summary>
+    /// <param name="target">The object to trigger effects on.</param>
+    /// <param name="key">The property to trigger effects on.</param>
     public static void Trigger(object target, string key)
     {
         if (!Subscriptions.TryGetValue(target, out var properties)) return;
@@ -63,6 +67,7 @@ public static class EffectManager
     /// track the function's dependencies and subscribe to them, re-running the function when they are triggered.
     /// </para>
     /// </summary>
+    /// <param name="update">The function to be run when the effect is triggered.</param>
     public static void WatchEffect(Action update)
     {
         void Effect()
@@ -77,6 +82,8 @@ public static class EffectManager
     /// <summary>
     /// Watches a source and executes an effect when it is triggered.
     /// </summary>
+    /// <param name="source">The function to register the observed dependencies.</param>
+    /// <param name="effect">The function to be run when the source is triggered.</param>
     public static void Watch(Action source, Action effect)
     {
         EffectStack.Push(() => effect());
@@ -87,6 +94,8 @@ public static class EffectManager
     /// <summary>
     /// Watches a source and executes an effect passing the result of the source when it is triggered.
     /// </summary>
+    /// <param name="source">The function to register the observed dependencies.</param>
+    /// <param name="effect">The function to be run when the source is triggered.</param>
     public static void Watch<T>(Func<T> source, Action<T> effect)
     {
         EffectStack.Push(() => effect(source()));
@@ -100,6 +109,8 @@ public static class EffectManager
     /// the parameters of the effect match the values returned by the sources.
     /// </para>
     /// </summary>
+    /// <param name="sources">The functions to register the observed dependencies.</param>
+    /// <param name="effect">The function to be run when one of the sources is triggered.</param>
     public static void Watch(Delegate[] sources, Delegate effect)
     {
         void Effect()
@@ -120,6 +131,7 @@ public static class EffectManager
     /// on the object (since this would cause a cycle).
     /// </para>
     /// </summary>
+    /// <param name="scope">The function in which effect tracking is gapped.</param>
     public static void GapEffectTracking(Action scope)
     {
         EffectStack.Push(null);
@@ -131,6 +143,7 @@ public static class EffectManager
     /// Causes a trigger on an object that implements <c>INotifyPropertyChanged</c>
     /// when the event is raised.
     /// </summary>
+    /// <param name="source">The INotifyPropertyChanged implementor to shim.</param>
     public static void ShimPropertyChanged(INotifyPropertyChanged source) =>
         source.PropertyChanged += (o, e) =>
         {

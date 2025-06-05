@@ -12,24 +12,45 @@ using S4UDashboard.Reactive;
 
 namespace S4UDashboard.ViewModels;
 
-public class FileTabViewModel : ViewModelBase
+/// <summary>The viewmodel for a tab.</summary>
+public class FileTabViewModel
 {
+    /// <summary>The location this tab represents.</summary>
     public ReactiveCell<ILocation> Location { get; }
+
+    /// <summary>The data this tab represents.</summary>
     public ReactiveCell<DatasetModel> Dataset { get; }
 
+    /// <summary>Whether or not this tab has unsaved changes.</summary>
     public ReactiveCell<bool> Dirty { get; } = new(false);
+
+    /// <summary>The value recorded in the name textbox.</summary>
     public ReactiveCell<string> NameField { get; }
+
+    /// <summary>The value recorded in the lower bound numeric control.</summary>
     public ReactiveCell<double?> LowerField { get; }
+
+    /// <summary>The value recorded in the upper bound numeric control.</summary>
     public ReactiveCell<double?> UpperField { get; }
 
+    /// <summary>Whether or not cells should be colourised.</summary>
     public ReactiveCell<bool> VisualiseCells { get; } = new(false);
 
+    /// <summary>The tab header computed based off of the dataset name and file location.</summary>
     public ComputedCell<string> Header { get; }
+
+    /// <summary>The datagrid source for the dataset sensor &amp; samples.</summary>
     public FlatTreeDataGridSource<IEnumerable<double>> GridSource { get; }
 
+    /// <summary>The command responsible for handling when the name field is updated.</summary>
     public ReactiveCommand UpdateAnnotatedName { get; }
+
+    /// <summary>The command responsible for handling when the name field is cleared.</summary>
     public ReactiveCommand ClearAnnotatedName { get; }
 
+    /// <summary>Creates a tab view model.</summary>
+    /// <param name="dataset">The dataset this tab will display.</param>
+    /// <param name="location">The location this tab represents.</param>
     public FileTabViewModel(ReactiveCell<DatasetModel> dataset, ILocation location)
     {
         Location = new(location);
@@ -73,6 +94,8 @@ public class FileTabViewModel : ViewModelBase
             _ => Dirty.Value = true);
     }
 
+    /// <summary>Creates a tab view model from just a location, if it can be loaded from.</summary>
+    /// <param name="location">The location to create the tab view model from.</param>
     public static FileTabViewModel? FromLocation(ILocation location)
     {
         ReactiveCell<DatasetModel>? dataset = default;
@@ -81,6 +104,7 @@ public class FileTabViewModel : ViewModelBase
         return new(dataset, location);
     }
 
+    /// <summary>Saves the dataset to the current location.</summary>
     public async Task<bool> SaveCurrent()
     {
         if (!Location.Value.IsPhysical) return await SaveAs();
@@ -92,6 +116,7 @@ public class FileTabViewModel : ViewModelBase
         return true;
     }
 
+    /// <summary>Saves the dataset to a new location.</summary>
     public async Task<bool> SaveAs()
     {
         var storage = ServiceProvider.ExpectService<IStorageProvider>();
@@ -114,6 +139,9 @@ public class FileTabViewModel : ViewModelBase
         return true;
     }
 
+    /// <summary>Updates the dataset with new annotated data.</summary>
+    /// <param name="update">The function to update the annotated data with.</param>
+    /// <param name="notifyName">Whether or not to trigger a name notification for tab sorting.</param>
     private void UpdateData(Func<AnnotatedDataModel, AnnotatedDataModel> update, bool notifyName = false)
     {
         var dataset = Dataset.Value;
@@ -123,6 +151,7 @@ public class FileTabViewModel : ViewModelBase
         if (notifyName) EffectManager.Trigger(this, "NameNotify");
     }
 
+    /// <summary>The file picker type for Sensing4U dataset binary files.</summary>
     public static readonly FilePickerFileType SDSFileType = new("Sensing4U Dataset (*.sds)")
     {
         Patterns = ["*.sds"],

@@ -8,13 +8,19 @@ using System.Linq;
 
 namespace S4UDashboard.Model;
 
+/// <summary>An observable list that can be sorted.</summary>
 public partial class SortedObservableView<T>(List<T> source) : INotifyPropertyChanged, INotifyCollectionChanged
 {
-    private static readonly NotifyCollectionChangedEventArgs ResetArgs =
-        new(NotifyCollectionChangedAction.Reset);
+    /// <summary>Static instance of event args to optimise object reuse.</summary>
+    private static readonly NotifyCollectionChangedEventArgs ResetArgs = new(NotifyCollectionChangedAction.Reset);
+
+    /// <summary>A list of indices that represents the sorted order.</summary>
     private ImmutableList<int>? _order;
+
+    /// <summary>The function used to select the property of the items to be sorted.</summary>
     private Func<T, IComparable>? _selector;
 
+    /// <summary>A list of indices that represents the sorted order, or null if there is no selector.</summary>
     public IReadOnlyList<int>? Order
     {
         get
@@ -31,6 +37,7 @@ public partial class SortedObservableView<T>(List<T> source) : INotifyPropertyCh
         }
     }
 
+    /// <summary>The function used to select the property of the items to be sorted.</summary>
     public Func<T, IComparable>? Selector
     {
         get => _selector;
@@ -42,6 +49,7 @@ public partial class SortedObservableView<T>(List<T> source) : INotifyPropertyCh
         }
     }
 
+    /// <summary>Imposes the sort order of the selector onto the backing list.</summary>
     public void Impose()
     {
         if (Selector == null) return;
@@ -52,13 +60,17 @@ public partial class SortedObservableView<T>(List<T> source) : INotifyPropertyCh
         foreach (var (i, v) in ordered.Select((v, i) => (i, v))) source[i] = v;
     }
 
+    /// <summary>Gets the element at the index, according to the sorted order.</summary>
     public T this[int index] => source[Order != null ? Order[index] : index];
+
+    /// <summary>The number of elements in the list.</summary>
     public int Count => source.Count;
 
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
     public event PropertyChangedEventHandler? PropertyChanged;
 }
 
+// implementation of an interface; does not require doc comments
 partial class SortedObservableView<T> : IList<T>
 {
     public bool IsReadOnly => false;
@@ -146,6 +158,7 @@ partial class SortedObservableView<T> : IList<T>
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
 
+// implementation of an interface; does not require doc comments
 partial class SortedObservableView<T> : IList
 {
     public bool IsFixedSize => false;

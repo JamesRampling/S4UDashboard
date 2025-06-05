@@ -28,7 +28,6 @@ public class HKMenu : Menu
     /// <summary>The list of registered hotkeys.</summary>
     private ImmutableHashSet<KeyBinding>? _keyBindings;
 
-    /// <summary>Performs the registration of input gestures as window hotkeys.</summary>
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
@@ -49,7 +48,6 @@ public class HKMenu : Menu
         window.KeyBindings.AddRange(_keyBindings);
     }
 
-    /// <summary>Removes all previously registered hotkeys from the window.</summary>
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);

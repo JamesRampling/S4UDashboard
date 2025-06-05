@@ -30,7 +30,6 @@ public class ReactiveCell<T>(T inner) : INotifyPropertyChanged
         }
     }
 
-    /// <summary>A property changed event triggered when the value changes.</summary>
     public event PropertyChangedEventHandler? PropertyChanged;
 }
 
@@ -49,6 +48,7 @@ public class ComputedCell<T> : INotifyPropertyChanged
     /// if the return value differs, the computed value will be updated.
     /// </para>
     /// </summary>
+    /// <param name="update">The function to call to calculate the value.</param>
     public ComputedCell(Func<T> update)
     {
         EffectManager.WatchEffect(() =>
@@ -74,6 +74,5 @@ public class ComputedCell<T> : INotifyPropertyChanged
         }
     }
 
-    /// <summary>A property changed event triggered when the value changes.</summary>
     public event PropertyChangedEventHandler? PropertyChanged;
 }

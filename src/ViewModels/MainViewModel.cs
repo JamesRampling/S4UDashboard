@@ -14,42 +14,69 @@ using Tabalonia.Controls;
 
 namespace S4UDashboard.ViewModels;
 
-public class MainViewModel : ViewModelBase
+/// <summary>The view model for the main view.</summary>
+public class MainViewModel
 {
+    /// <summary>The index of the currently selected tab.</summary>
     public ReactiveCell<int> SelectedTabIndex { get; } = new(-1);
+
+    /// <summary>A reference to the currently selected tab view model.</summary>
     public ReactiveCell<FileTabViewModel?> SelectedTab { get; } = new(null);
 
+    /// <summary>A sortable collection of currently loaded tabs.</summary>
     public SortedObservableView<FileTabViewModel> TabList { get; } = new([]);
 
+    /// <summary>The current tab sort mode.</summary>
     public ReactiveCell<SortMode> TabsSortMode { get; } = new(SortMode.Unsorted);
+
+    /// <summary>Whether or not the tab sort mode is not unsorted.</summary>
     public ComputedCell<bool> TabsAreSorted { get; }
 
+    /// <summary>The current search text in the search textbox.</summary>
     public ReactiveCell<string> SearchText { get; } = new("");
 
+    /// <summary>The command responsible for handling the User Manual menu button.</summary>
     public ReactiveCommand OpenWiki { get; } = new(() => true, _ =>
         ServiceProvider.ExpectService<ILauncher>()
             .LaunchUriAsync(new("https://jamesrampling.github.io/s4ud/")));
+
+    /// <summary>The command responsible for handling the About menu button.</summary>
     public ReactiveCommand AboutAlert { get; } = new(() => true, _ =>
         ServiceProvider.ExpectService<AlertService>().Alert(
             "About",
             "Sensing4U Dashboard",
             "Version 1.0.0\nCreated by CITE Managed Systems for Sensing4U"));
+
+    /// <summary>The command responsible for handling the Quit menu button.</summary>
     public ReactiveCommand QuitApp { get; } = new(
         () => ServiceProvider.GetService<MainWindow>() is not null,
         _ => ServiceProvider.ExpectService<MainWindow>().Close());
 
+    /// <summary>The command responsible for handling the Next Tab menu button.</summary>
     public ReactiveCommand GoNextTab { get; }
+
+    /// <summary>The command responsible for handling the Previous Tab menu button.</summary>
     public ReactiveCommand GoPrevTab { get; }
 
+    /// <summary>The command responsible for handling the Close Tab menu button.</summary>
     public ReactiveCommand CloseSelectedTab { get; }
+
+    /// <summary>The command responsible for handling closing a tab through the X button on each tab.</summary>
     public ReactiveCommand CloseTabCommand { get; }
 
+    /// <summary>The command responsible for handling the Save menu button.</summary>
     public ReactiveCommand SaveCurrent { get; }
+
+    /// <summary>The command responsible for handling the Save As menu button.</summary>
     public ReactiveCommand SaveAsDialog { get; }
+
+    /// <summary>The command responsible for handling the Save All menu button.</summary>
     public ReactiveCommand SaveAll { get; }
 
+    /// <summary>The command responsible for handling the search button.</summary>
     public ReactiveCommand SearchTabs { get; }
 
+    /// <summary>Initialises the main viewmodel.</summary>
     public MainViewModel()
     {
         var window = ServiceProvider.GetService<MainWindow>();
@@ -111,7 +138,12 @@ public class MainViewModel : ViewModelBase
         });
     }
 
+    /// <summary>Selects a tab at the given index, clamped to the range of tab indices.</summary>
+    /// <param name="index">The index of the tab to select.</param>
     private void SelectTab(int index) => SelectedTabIndex.Value = Math.Clamp(index, 0, TabList.Count - 1);
+
+    /// <summary>Closes the tab associated to the given viewmodel.</summary>
+    /// <param name="tab">The viewmodel of the tab to close.</param>
     private async void CloseTab(FileTabViewModel tab)
     {
         var initial = SelectedTabIndex.Value;
@@ -120,6 +152,7 @@ public class MainViewModel : ViewModelBase
             SelectTab(initial - (closed < initial ? 1 : 0));
     }
 
+    /// <summary>Creates an Open File dialog and opens the selected files.</summary>
     public async void OpenFileDialog()
     {
         var storage = ServiceProvider.ExpectService<IStorageProvider>();
@@ -161,7 +194,10 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    /// <summary>The number of previously created sample datasets.</summary>
     private static int _sampleCount = 1;
+
+    /// <summary>Creates a sample dataset and adds a tab with said dataset.</summary>
     public void GenerateSample()
     {
         var loc = DataProcessing.Instance.AddSampleDataset(
@@ -180,6 +216,8 @@ public class MainViewModel : ViewModelBase
         SelectTab(idx);
     }
 
+    /// <summary>Adds a tab viewmodel as a tab.</summary>
+    /// <param name="vm">The viewmodel to add to the tab list.</param>
     private void AddTabViewModel(FileTabViewModel vm)
     {
         TabList.Add(vm);
@@ -193,6 +231,8 @@ public class MainViewModel : ViewModelBase
         );
     }
 
+    /// <summary>Removes a tab associated to a tab viewmodel from the tab list and data processor.</summary>
+    /// <param name="tab">The viewmodel associated to the dataset to remove.</param>
     private async Task<int> HandleClosingTab(FileTabViewModel tab)
     {
         if (!await TryCloseTab(tab)) return -1;
@@ -207,6 +247,8 @@ public class MainViewModel : ViewModelBase
         return front ? idx : -1;
     }
 
+    /// <summary>Attempts to close a tab, if it is dirty, ask the user to save the tab.</summary>
+    /// <param name="tab">The viewmodel associated to the tab to close.</param>
     private static async Task<bool> TryCloseTab(FileTabViewModel tab)
     {
         if (!tab.Dirty.Value) return true;
@@ -227,7 +269,7 @@ public class MainViewModel : ViewModelBase
         return result;
     }
 
-    // Handles the event when the window was requested to close.
+    /// <summary>An event handler that intercepts the window closing and asks the user about unsaved files.</summary>
     private async void HandleClosing(object? o, WindowClosingEventArgs e)
     {
         e.Cancel = true;
@@ -240,9 +282,7 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    // Handles actions that should be performed before the window is closed.
-    // Returns whether or not the window should actually be closed, which
-    // may not be true if the user cancelled the close in a dialog.
+    /// <summary>A helper that checks for any unsaved files and asks the user if they want to save each of them.</summary>
     private async Task<bool> TryExit()
     {
         if (!TabList.Where(t => t.Dirty.Value).Any()) return true;

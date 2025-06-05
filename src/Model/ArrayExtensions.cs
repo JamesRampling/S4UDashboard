@@ -11,6 +11,7 @@ public static class ArrayExtensions
     /// <summary>
     /// Enumerates over all of the items in a 2D array one by one.
     /// </summary>
+    /// <param name="array">The 2D array to enumerate over.</param>
     public static IEnumerable<T> EnumerateFlat<T>(this T[,] array)
     {
         foreach (var item in array) yield return item;
@@ -19,6 +20,8 @@ public static class ArrayExtensions
     /// <summary>
     /// Enumerates over all of the items in a single row of a 2D array.
     /// </summary>
+    /// <param name="array">The 2D array to enumerate over.</param>
+    /// <param name="row">The row in the array to enumerate over.</param>
     public static IEnumerable<T> EnumerateRow<T>(this T[,] array, int row)
     {
         for (int column = 0; column < array.GetLength(0); column++)
@@ -28,6 +31,8 @@ public static class ArrayExtensions
     /// <summary>
     /// Enumerates over all of the items in a single column of a 2D array.
     /// </summary>
+    /// <param name="array">The 2D array to enumerate over.</param>
+    /// <param name="row">The column in the array to enumerate over.</param>
     public static IEnumerable<T> EnumerateColumn<T>(this T[,] array, int column)
     {
         for (int row = 0; row < array.GetLength(1); row++)
@@ -38,6 +43,7 @@ public static class ArrayExtensions
     /// Enumerates over all of the rows of a 2D array and for each yields an
     /// IEnumerable that enumerates over all of the columns in the given row.
     /// </summary>
+    /// <param name="array">The 2D array to enumerate over.</param>
     public static IEnumerable<IEnumerable<T>> EnumerateGrid<T>(this T[,] array)
     {
         for (int row = 0; row < array.GetLength(1); row++)
@@ -48,6 +54,9 @@ public static class ArrayExtensions
     /// Given a nested IEnumerable and a number of columns and rows, converts
     /// the IEnumerable into a 2D array where each first order enumerable is a column.
     /// </summary>
+    /// <param name="enumerable">The enumerable to generate the array from.</param>
+    /// <param name="columns">The number of columns in the array.</param>
+    /// <param name="rows">The number of rows in the array.</param>
     public static T[,] To2DArray<T>(this IEnumerable<IEnumerable<T>> enumerable, int columns, int rows)
     {
         var array = new T[columns, rows];
@@ -66,6 +75,9 @@ public static class ArrayExtensions
     /// the IEnumerable into a 2D array where each chunk of <c>rows</c> elements
     /// make a column.
     /// </summary>
+    /// <param name="enumerable">The enumerable to generate the array from.</param>
+    /// <param name="columns">The number of columns in the array.</param>
+    /// <param name="rows">The number of rows in the array.</param>
     public static T[,] To2DArray<T>(this IEnumerable<T> enumerable, int columns, int rows) =>
         enumerable.Chunk(rows).To2DArray<T>(columns, rows);
 }
